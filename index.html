@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <title>Biên bản bàn giao có chữ ký</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="js/signature-algorithm.js"></script>
+  <style>
+    @font-face {
+      font-family: "SignatureNiceMemory";
+      src:
+        url("font/14TH Nice Memory.otf") format("opentype"),
+        url("font/14TH Nice Memory.ttf") format("truetype");
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "SignatureHarbour";
+      src: url("font/Fz-Harbour-Light.ttf") format("truetype");
+      font-display: swap;
+    }
+
+    :root {
+      --paper: #fffdf8;
+      --ink: #111;
+      --muted: #64717d;
+      --line: #d7e0e7;
+      --panel: #ffffff;
+      --bg: #f4f7f8;
+      --brand: #ff0037;
+      --brand-dark: #9f1116;
+      --teal: #0f5967;
+      --soft: #eef4f6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 12px;
+      color: var(--ink);
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .controls {
+      background: var(--panel);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 24px rgba(18, 35, 48, 0.08);
+    }
+
+    .controls-head {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 10px;
+      text-align: center;
+      flex-wrap: wrap;
+    }
+
+    .controls-head > div:first-child {
+      display: contents;
+    }
+
+    .control-title {
+      font-weight: 800;
+      color: var(--brand);
+      font-size: 18px;
+      line-height: 1.25;
+      width: 100%;
+      text-align: center;
+    }
+
+    .control-note,
+    .field-note,
+    .receiver-status {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .control-note {
+      text-align: center;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 1fr) minmax(180px, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field span {
+      color: #26333d;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input[type=file],
+    select,
+    textarea {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid #cdd9e2;
+      border-radius: 6px;
+      background: #fff;
+      color: #101820;
+      font: 15px/1.35 Arial, Helvetica, sans-serif;
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 74px;
+      resize: vertical;
+    }
+
+    input[type=file]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(15, 89, 103, 0.14);
+    }
+
+    .primary-action,
+    .actions,
+    .receiver-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .primary-action {
+      justify-content: center;
+      padding-top: 2px;
+    }
+
+    .primary-action button {
+      width: min(100%, 360px);
+      min-height: 48px;
+      font-size: 16px;
+    }
+
+    .actions {
+      justify-content: center;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 8px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--brand);
+      background: var(--brand);
+      color: #fff;
+      cursor: pointer;
+      font: 700 14px/1.2 Arial, Helvetica, sans-serif;
+    }
+
+    button:hover { background: var(--brand-dark); }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    button.ghost {
+      background: #fff;
+      color: var(--brand);
+    }
+
+    button.ghost:hover {
+      background: #fff4f4;
+    }
+
+    button.secondary {
+      border-color: var(--teal);
+      background: var(--teal);
+    }
+
+    button.secondary:hover {
+      background: #0b4752;
+    }
+
+    .receiver-panel {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .receiver-panel.is-open { display: grid; gap: 8px; }
+
+    .receiver-status {
+      min-height: 19px;
+    }
+
+    .preview-shell {
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 18px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .pages-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      align-items: center;
+      min-width: 210mm;
+      transform-origin: top center;
+    }
+
+    .page,
+    .page-continuation {
+      width: 210mm;
+      min-height: 297mm;
+      height: 297mm;
+      margin: 0 auto;
+      background-color: var(--paper);
+      background-image:
+        radial-gradient(circle at 18% 14%, rgba(80, 65, 35, 0.035) 0 0.35px, transparent 0.8px),
+        radial-gradient(circle at 74% 31%, rgba(40, 35, 25, 0.026) 0 0.3px, transparent 0.78px),
+        radial-gradient(circle at 38% 72%, rgba(180, 168, 130, 0.045) 0 0.45px, transparent 0.95px),
+        repeating-linear-gradient(98deg, rgba(120, 106, 68, 0.018) 0 0.45px, transparent 0.45px 4.8px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(253, 249, 238, 0.3));
+      background-size: 7px 7px, 9px 9px, 11px 11px, 100% 100%, 100% 100%;
+      padding: 12mm;
+      box-shadow:
+        inset 0 0 0 1px rgba(150, 135, 100, 0.16),
+        inset 0 0 24mm rgba(90, 76, 45, 0.035),
+        0 0 6px rgba(0,0,0,0.08);
+      page-break-after: always;
+      font-family: "Times New Roman", Times, serif;
+      overflow: hidden;
+    }
+
+    @page { size: A4 portrait; margin: 0; }
+
+    @media print {
+      body { margin: 0; padding: 0; background: #fff; zoom: 90%; }
+      .container { margin: 0; padding: 0; max-width: none; }
+      .controls { display: none !important; }
+      .png-preview-modal { display: none !important; }
+      .preview-shell { overflow: visible; padding: 0; }
+      .pages-wrapper { min-width: 0; display: block; }
+      .page,
+      .page-continuation {
+        background: #fff !important;
+        box-shadow: none;
+        margin: 0;
+        padding: 10mm;
+        height: 297mm;
+        min-height: 297mm;
+        overflow: hidden;
+      }
+      .codes { page-break-inside: auto; }
+      .page:empty,
+      .page-continuation:empty { display: none; }
+    }
+
+    .header-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+    .header-table td { vertical-align: top; padding: 0; }
+    .logo-cell { width: 160px; padding-left: 6px; }
+    .logo-cell img { max-width: 150px; display: block; margin: auto; }
+    .company-block {
+      text-align: center;
+      font-weight: 700;
+      font-size: 9px;
+      line-height: 1.05;
+      margin-top: 6px;
+      white-space: nowrap;
+    }
+    .company-block .line2 { display: block; margin-top: 4px; }
+    .center-cell { text-align: center; }
+    .center-cell .gov { font-size: 13px; font-weight: 700; }
+    .center-cell .motto { font-size: 14px; margin-top: 6px; font-weight: 600; }
+    .date-cell {
+      width: 160px;
+      text-align: right;
+      font-style: italic;
+      font-size: 12px;
+      padding-right: 6px;
+      white-space: nowrap;
+    }
+
+    h1.title {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin: 8px 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .info-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 6px; }
+    .info-table td { padding: 4px 6px; vertical-align: top; }
+    .info-left { width: 60%; }
+    .info-right { width: 40%; }
+    .receiver-names {
+      display: inline-block;
+      max-width: calc(100% - 52px);
+      vertical-align: baseline;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .note { font-style: italic; margin: 6px 0; font-size: 13px; }
+
+    .codes {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      page-break-inside: auto;
+    }
+    .codes th,
+    .codes td {
+      border: 0.6px solid rgba(20, 20, 20, 0.52);
+      padding: 2px 4px;
+      text-align: center;
+      vertical-align: middle;
+      word-break: break-all;
+    }
+    .codes th { font-weight: 700; background: rgba(255, 255, 255, 0.2); }
+    .codes td.stt { font-weight: 600; }
+    .codes tr { page-break-inside: avoid; }
+
+    .confirm {
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .sign-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 13px;
+      table-layout: fixed;
+    }
+
+    .sign-table td {
+      vertical-align: bottom;
+      text-align: center;
+      padding: 5px 6px;
+    }
+
+    .sign-title {
+      font-weight: 700;
+      height: 24px;
+    }
+
+    .sign-gap { width: 4%; }
+
+    .sign-space {
+      height: 58px;
+      vertical-align: top !important;
+      padding-top: 0 !important;
+    }
+
+    .signature-list {
+      min-height: 52px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      align-items: start;
+      justify-items: center;
+      gap: 0 4px;
+    }
+
+    .signature-list.compact {
+      grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+    }
+
+    .signature-list.receiver-cloud {
+      display: flex;
+      min-height: 30px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      align-content: flex-start;
+      justify-content: center;
+      gap: 0;
+      padding: 0;
+    }
+
+    .signature-item {
+      width: 100%;
+      min-height: 46px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow: hidden;
+    }
+
+    .receiver-cloud .signature-item {
+      width: auto;
+      min-height: 22px;
+      align-items: center;
+      flex: 0 0 auto;
+      margin: -8px -24px -8px;
+    }
+
+    .receiver-cloud .signature-item + .signature-item {
+      margin-left: -8px;
+    }
+
+    .signature-row-break {
+      flex-basis: 100%;
+      width: 0;
+      height: 0;
+      margin-top: -18px;
+    }
+
+    .signature-canvas {
+      display: block;
+      max-width: 100%;
+      image-rendering: auto;
+    }
+
+    .signature-empty {
+      min-height: 54px;
+    }
+
+    .tbl-wrap { overflow: hidden; }
+
+    .png-preview-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background: rgba(10, 18, 26, 0.58);
+    }
+
+    .png-preview-modal.is-open {
+      display: flex;
+    }
+
+    .png-preview-dialog {
+      width: min(980px, 100%);
+      max-height: calc(100dvh - 24px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid rgba(215, 224, 231, 0.9);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    .png-preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .png-preview-title {
+      font-weight: 800;
+      color: #1d2a34;
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .png-preview-note {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .png-preview-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .png-preview-body {
+      flex: 1 1 auto;
+      overflow: auto;
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      padding: 12px;
+      background: #e9eef2;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .png-preview-page {
+      width: min(100%, 794px);
+      margin: 0 auto;
+    }
+
+    .png-preview-page img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fff;
+      box-shadow: 0 6px 22px rgba(20, 28, 36, 0.18);
+    }
+
+    .png-preview-empty {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 24px 12px;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 8px; }
+      .container { max-width: none; }
+      .controls { padding: 10px; }
+      .controls-head {
+        display: flex;
+        gap: 6px 10px;
+      }
+      .control-title { text-align: center; }
+      .control-note {
+        position: static;
+        max-width: none;
+        text-align: center;
+      }
+      .control-grid { grid-template-columns: 1fr; }
+      .primary-action {
+        justify-content: stretch;
+      }
+      .primary-action button {
+        width: 100%;
+      }
+      .actions,
+      .receiver-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .actions button,
+      .receiver-actions button {
+        width: 100%;
+      }
+      .preview-shell {
+        margin: 0 -8px;
+        overflow: hidden;
+        padding: 0 8px 16px;
+      }
+      .png-preview-modal {
+        padding: 8px;
+        align-items: stretch;
+      }
+      .png-preview-dialog {
+        max-height: calc(100dvh - 16px);
+      }
+      .png-preview-head {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .png-preview-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .png-preview-actions button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .actions,
+      .receiver-actions,
+      .png-preview-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="controls" role="region" aria-label="Điều khiển tạo biên bản">
+      <div class="controls-head">
+        <div>
+          <div class="control-title">Biên bản bàn giao</div>
+  
+        </div>
+        <div class="control-note">Mã vận đơn = cột A · Nhân viên = cột M</div>
+      </div>
+
+      <div class="control-grid">
+        <label class="field">
+          <span>File kiểm kho</span>
+          <input type="file" id="inventoryFile" accept=".xlsx,.xls" title="Upload file kiểm kho (.xlsx)"/>
+        </label>
+
+        <label class="field">
+          <span>Người bàn giao</span>
+          <select id="employeeSelect" title="Chọn nhân viên">
+            <option value="">-- Chọn nhân viên --</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Mã bưu cục</span>
+          <select id="bcSelect" title="Chọn mã bưu cục">
+            <option value="">-- Chọn Mã BC --</option>
+          </select>
+        </label>
+
+      </div>
+
+      <div class="primary-action">
+        <button type="button" id="btnGenerate">Tạo biên bản</button>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="btnToggleReceiver" class="secondary">Nhập người nhận</button>
+        <button type="button" id="btnExportPng" class="ghost">Xuất PNG</button>
+        <button type="button" id="btnPrint">In A4</button>
+      </div>
+
+      <div class="receiver-panel" id="receiverPanel">
+        <label class="field" for="receiverNamesInput">
+          <span>Tên người nhận bàn giao</span>
+          <textarea id="receiverNamesInput" placeholder="Ví dụ: Nguyễn Văn A, Trần Thị B"></textarea>
+        </label>
+        <div class="field-note">Có thể nhập một hoặc nhiều tên, mỗi tên cách nhau bằng dấu phẩy (,).</div>
+        <div class="receiver-actions">
+          <button type="button" id="btnSaveReceiver" class="ghost">Lưu tên người nhận</button>
+        </div>
+        <div class="receiver-status" id="receiverStatus">Chưa nhập người nhận.</div>
+      </div>
+    </div>
+
+    <div class="preview-shell" id="previewShell">
+      <div id="pages" class="pages-wrapper"></div>
+    </div>
+  </div>
+
+  <div class="png-preview-modal" id="pngPreviewModal" aria-hidden="true">
+    <div class="png-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="pngPreviewTitle">
+      <div class="png-preview-head">
+        <div>
+          <div class="png-preview-title" id="pngPreviewTitle">Xem trước PNG</div>
+          <div class="png-preview-note" id="pngPreviewNote">Kiểm tra ảnh trước khi tải xuống.</div>
+        </div>
+        <div class="png-preview-actions">
+          <button type="button" id="btnDownloadPreviewPng">Tải PNG</button>
+          <button type="button" id="btnClosePngPreview" class="ghost">Đóng</button>
+        </div>
+      </div>
+      <div class="png-preview-body" id="pngPreviewBody">
+        <div class="png-preview-empty">Chưa có ảnh xem trước.</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/J%26T_Express_logo.svg/3840px-J%26T_Express_logo.svg.png";
+
+  const bcMap = {
+    "024K33": "Pickup Hà Đông 4",
+    "024K44": "Pickup Hà Đông 5"
+  };
+
+  const bcSelect = document.getElementById("bcSelect");
+  Object.entries(bcMap).forEach(([code, name]) => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = `${code} - ${name}`;
+    bcSelect.appendChild(opt);
+  });
+
+  function todayDateString() {
+    const d = new Date();
+    return `Hà Nội, Ngày ${String(d.getDate()).padStart(2, "0")} Tháng ${String(d.getMonth() + 1).padStart(2, "0")} Năm ${d.getFullYear()}`;
+  }
+
+  const CURRENT_DATE_STR = todayDateString();
+  const inventoryFile = document.getElementById("inventoryFile");
+  const employeeSelect = document.getElementById("employeeSelect");
+  const btnGenerate = document.getElementById("btnGenerate");
+  const btnToggleReceiver = document.getElementById("btnToggleReceiver");
+  const btnExportPng = document.getElementById("btnExportPng");
+  const btnPrint = document.getElementById("btnPrint");
+  const receiverPanel = document.getElementById("receiverPanel");
+  const receiverNamesInput = document.getElementById("receiverNamesInput");
+  const btnSaveReceiver = document.getElementById("btnSaveReceiver");
+  const receiverStatus = document.getElementById("receiverStatus");
+  const previewShell = document.getElementById("previewShell");
+  const pagesWrapper = document.getElementById("pages");
+  const pngPreviewModal = document.getElementById("pngPreviewModal");
+  const pngPreviewBody = document.getElementById("pngPreviewBody");
+  const pngPreviewNote = document.getElementById("pngPreviewNote");
+  const btnDownloadPreviewPng = document.getElementById("btnDownloadPreviewPng");
+  const btnClosePngPreview = document.getElementById("btnClosePngPreview");
+
+  let empMap = {};
+  let receiverNames = [];
+  let receiverSignatureStates = [];
+  let receiverSignaturesReady = false;
+  let handoverSignatureState = null;
+  let handoverSignatureName = "";
+  let activeEmpName = "";
+  let activeCodes = [];
+  let hasGeneratedDocument = false;
+  let pngPreviewFiles = [];
+  const signatureFontsReady = SignatureAlgorithm.loadFontsFromFolder("font");
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function parseReceiverNames(value) {
+    return String(value || "")
+      .split(",")
+      .map((name) => name.trim())
+      .filter(Boolean);
+  }
+
+  function updateReceiverStatus() {
+    if (!receiverNames.length) {
+      receiverStatus.textContent = "Chưa nhập người nhận.";
+      return;
+    }
+    const names = receiverNames.join(", ");
+    receiverStatus.textContent = receiverSignaturesReady
+      ? `Đã tạo chữ ký cho: ${names}`
+      : `Đã lưu: ${names}`;
+  }
+
+  function getBcInfo() {
+    const maBC = bcSelect.value || Object.keys(bcMap)[0];
+    return { maBC, tenBC: bcMap[maBC] || "" };
+  }
+
+  function ensureHandoverSignature(empName, force = false) {
+    if (!empName) return null;
+    if (force || !handoverSignatureState || handoverSignatureName !== empName) {
+      handoverSignatureState = SignatureAlgorithm.makeSignatureState("normal", "handover");
+      handoverSignatureName = empName;
+    }
+    return handoverSignatureState;
+  }
+
+  function randomizeReceiverSignatures() {
+    const compact = receiverNames.length > 2;
+    receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState(compact ? "compact" : "normal", "receiver"));
+    receiverSignaturesReady = receiverNames.length > 0;
+  }
+
+  function saveReceiverNames(makeSignatures = false) {
+    const nextNames = parseReceiverNames(receiverNamesInput.value);
+    receiverNames = nextNames;
+
+    if (makeSignatures) {
+      if (!receiverNames.length) {
+        alert("Hãy nhập ít nhất một tên người nhận bàn giao.");
+        receiverSignaturesReady = false;
+      } else {
+        randomizeReceiverSignatures();
+      }
+    } else {
+      receiverSignaturesReady = false;
+      receiverSignatureStates = [];
+    }
+
+    updateReceiverStatus();
+    rerenderCurrentDocument();
+  }
+
+  function readReceiverNamesForGenerate() {
+    receiverNames = parseReceiverNames(receiverNamesInput.value);
+    if (receiverNames.length) {
+      randomizeReceiverSignatures();
+    } else {
+      receiverSignatureStates = [];
+      receiverSignaturesReady = false;
+    }
+    updateReceiverStatus();
+  }
+
+  function fitPreviewToScreen() {
+    pagesWrapper.style.transform = "";
+    previewShell.style.height = "";
+
+    const firstPage = pagesWrapper.querySelector(".page, .page-continuation");
+    if (!firstPage || !window.matchMedia("(max-width: 760px)").matches) return;
+
+    const shellWidth = Math.max(280, previewShell.clientWidth - 16);
+    const scale = Math.min(1, shellWidth / firstPage.offsetWidth);
+    pagesWrapper.style.transform = `scale(${scale})`;
+    previewShell.style.height = `${Math.ceil(pagesWrapper.scrollHeight * scale) + 16}px`;
+  }
+
+  function schedulePreviewFit() {
+    requestAnimationFrame(async () => {
+      try {
+        await SignatureAlgorithm.paintSignatures(pagesWrapper);
+      } catch (err) {
+        console.warn("Không vẽ được chữ ký ở lần này:", err);
+      }
+      fitPreviewToScreen();
+    });
+  }
+
+  function confirmSignHtml(empName) {
+    const handoverSignature = empName
+      ? SignatureAlgorithm.renderSignatureGroup([empName], [ensureHandoverSignature(empName)], true)
+      : '<div class="signature-empty"></div>';
+    const receiverSignature = SignatureAlgorithm.renderSignatureGroup(receiverNames, receiverSignatureStates, receiverSignaturesReady);
+
+    return `
+      <div class="confirm">
+        <div>Bên B xác nhận đã nhận đúng số lượng và mã vận đơn chi tiết như trên.</div>
+        <div>Biên bản được lập thành 02 bản, mỗi bên giữ 01 bản.</div>
+      </div>
+      <table class="sign-table">
+        <tr>
+          <td class="sign-title" style="width:48%;">NGƯỜI BÀN GIAO</td>
+          <td class="sign-gap"></td>
+          <td class="sign-title" style="width:48%;">NGƯỜI NHẬN BÀN GIAO</td>
+        </tr>
+        <tr>
+          <td class="sign-space">${handoverSignature}</td>
+          <td></td>
+          <td class="sign-space">${receiverSignature}</td>
+        </tr>
+        <tr>
+          <td>(Ký, ghi rõ họ tên)</td>
+          <td></td>
+          <td>(Ký, ghi rõ họ tên)</td>
+        </tr>
+      </table>
+    `;
+  }
+
+  function receiverNamesHtml() {
+    if (!receiverNames.length) return "................................................";
+    return escapeHtml(receiverNames.join(", "));
+  }
+
+  function createFirstPageSkeleton(empName, dateStr, maBC, tenBC) {
+    const receiverDisplay = receiverNamesHtml();
+
+    return `
+      <div class="page">
+        <table class="header-table"><tr>
+          <td class="logo-cell">
+            <img src="${LOGO_URL}" crossorigin="anonymous" alt="logo"/>
+            <div class="company-block">
+              <span class="line1">CÔNG TY TNHH MTV CPN THUẬN PHONG</span>
+              <span class="line2">CHI NHÁNH HÀ NỘI</span>
+            </div>
+          </td>
+          <td class="center-cell">
+            <div class="gov">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+            <div class="motto">Độc Lập - Tự Do - Hạnh Phúc</div>
+          </td>
+          <td class="date-cell">${escapeHtml(dateStr || CURRENT_DATE_STR)}</td>
+        </tr></table>
+
+        <h1 class="title">BIÊN BẢN BÀN GIAO</h1>
+
+        <table class="info-table">
+          <tr>
+            <td class="info-left"><b>Bên Bàn Giao (A):</b> Mã BC:
+              <span id="maBC" style="font-weight: bolder;">${escapeHtml(maBC || "")}</span>
+            </td>
+            <td class="info-right">Tên BC:
+              <b id="tenBC">${escapeHtml(tenBC || "")}</b>
+            </td>
+          </tr>
+          <tr>
+            <td class="info-left">Ông/Bà: <span id="nguoiGiao" style="font-weight: bolder;">${escapeHtml(empName || "...........................")}</span></td>
+            <td class="info-right">Chức vụ: <span id="cv" style="font-weight: bolder;">Bưu tá</span></td>
+          </tr>
+          <tr><td class="info-left"><b>Bên Nhận Bàn Giao (B):</b></td><td></td></tr>
+          <tr>
+            <td class="info-left">Ông/Bà: <span class="receiver-names">${receiverDisplay}</span></td>
+            <td class="info-right">Chức vụ: ................................</td>
+          </tr>
+        </table>
+
+        <div class="note">Hai bên cùng xác nhận việc bàn giao chi tiết như sau:</div>
+
+        <div class="tbl-wrap">
+          <table class="codes">
+            <thead>
+              <tr>
+                <th>Stt</th><th>Mã vận đơn</th>
+                <th>Stt</th><th>Mã vận đơn</th>
+                <th>Stt</th><th>Mã vận đơn</th>
+                <th>Stt</th><th>Mã vận đơn</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function buildTableRows(codes, startIndex, maxRows) {
+    const rows = [];
+    const cols = 4;
+    const totalRows = Math.min(maxRows, Math.ceil((codes.length - startIndex) / cols));
+    for (let r = 0; r < totalRows; r++) {
+      let rowHtml = "<tr>";
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c + startIndex;
+        if (idx < codes.length) {
+          rowHtml += `<td class="stt">${idx + 1}</td><td class="code">${escapeHtml(codes[idx])}</td>`;
+        } else {
+          rowHtml += '<td class="stt">&nbsp;</td><td class="code">&nbsp;</td>';
+        }
+      }
+      rowHtml += "</tr>";
+      rows.push(rowHtml);
+    }
+    return rows;
+  }
+
+  function rowsLimitWithSignature() {
+    if (receiverNames.length > 4) return 30;
+    if (receiverNames.length > 2) return 34;
+    if (receiverNames.length > 0) return 38;
+    return 40;
+  }
+
+  function paginateRows(empName, codes) {
+    pagesWrapper.innerHTML = "";
+    const { maBC, tenBC } = getBcInfo();
+    const maxRowsFirstPage = 50;
+    const maxRowsContinuation = 52;
+    const maxRowsLastPage = rowsLimitWithSignature();
+
+    if (!codes || !codes.length) {
+      const firstPage = document.createElement("div");
+      firstPage.innerHTML = createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC);
+      const tbody = firstPage.querySelector(".codes tbody");
+      for (let r = 0; r < 8; r++) {
+        tbody.innerHTML += '<tr><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td></tr>';
+      }
+      firstPage.querySelector(".tbl-wrap").insertAdjacentHTML("afterend", confirmSignHtml(empName));
+      pagesWrapper.appendChild(firstPage);
+      schedulePreviewFit();
+      return;
+    }
+
+    let currentIndex = 0;
+    const firstPage = document.createElement("div");
+    firstPage.innerHTML = createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC);
+    const firstTbody = firstPage.querySelector(".codes tbody");
+    const firstRowsLimit = codes.length <= maxRowsLastPage * 4 ? maxRowsLastPage : maxRowsFirstPage;
+    const rowsFirst = buildTableRows(codes, currentIndex, firstRowsLimit);
+    firstTbody.innerHTML = rowsFirst.join("");
+    currentIndex += rowsFirst.length * 4;
+
+    if (currentIndex >= codes.length) {
+      firstPage.querySelector(".tbl-wrap").insertAdjacentHTML("afterend", confirmSignHtml(empName));
+      pagesWrapper.appendChild(firstPage);
+      schedulePreviewFit();
+      return;
+    }
+
+    pagesWrapper.appendChild(firstPage);
+
+    while (currentIndex < codes.length) {
+      const remainingItems = codes.length - currentIndex;
+      const rowsLimit = remainingItems <= maxRowsLastPage * 4 ? maxRowsLastPage : maxRowsContinuation;
+      const contPage = document.createElement("div");
+      contPage.className = "page-continuation";
+
+      const tblWrap = document.createElement("div");
+      tblWrap.className = "tbl-wrap";
+
+      const table = document.createElement("table");
+      table.className = "codes";
+
+      const tbody = document.createElement("tbody");
+      const rowsCont = buildTableRows(codes, currentIndex, rowsLimit);
+      tbody.innerHTML = rowsCont.join("");
+
+      table.appendChild(tbody);
+      tblWrap.appendChild(table);
+      contPage.appendChild(tblWrap);
+      pagesWrapper.appendChild(contPage);
+
+      currentIndex += rowsCont.length * 4;
+
+      if (currentIndex >= codes.length) {
+        tblWrap.insertAdjacentHTML("afterend", confirmSignHtml(empName));
+      }
+    }
+    schedulePreviewFit();
+  }
+
+  function showInitialTemplate() {
+    pagesWrapper.innerHTML = "";
+    const { maBC, tenBC } = getBcInfo();
+    const firstPage = document.createElement("div");
+    firstPage.innerHTML = createFirstPageSkeleton("", CURRENT_DATE_STR, maBC, tenBC);
+    const tbody = firstPage.querySelector(".codes tbody");
+    for (let r = 0; r < 8; r++) {
+      tbody.innerHTML += '<tr><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td></tr>';
+    }
+    firstPage.querySelector(".tbl-wrap").insertAdjacentHTML("afterend", confirmSignHtml(""));
+    pagesWrapper.appendChild(firstPage);
+    schedulePreviewFit();
+  }
+
+  function rerenderCurrentDocument() {
+    clearPngPreview();
+    if (hasGeneratedDocument) {
+      paginateRows(activeEmpName, activeCodes);
+    } else {
+      showInitialTemplate();
+    }
+  }
+
+  function setExportBusy(isBusy) {
+    btnExportPng.disabled = isBusy;
+    btnExportPng.textContent = isBusy ? "Đang tạo PNG..." : "Xuất PNG";
+  }
+
+  function clearPngPreview() {
+    pngPreviewFiles = [];
+    pngPreviewBody.innerHTML = '<div class="png-preview-empty">Chưa có ảnh xem trước.</div>';
+    pngPreviewNote.textContent = "Kiểm tra ảnh trước khi tải xuống.";
+  }
+
+  function showPngPreview(files) {
+    pngPreviewFiles = files;
+    pngPreviewBody.innerHTML = files.map((file, index) => `
+      <div class="png-preview-page">
+        <img src="${file.url}" alt="Trang PNG ${index + 1}">
+      </div>
+    `).join("");
+    pngPreviewNote.textContent = `Đã tạo ${files.length} trang PNG. Kiểm tra xong thì bấm Tải PNG.`;
+    pngPreviewModal.classList.add("is-open");
+    pngPreviewModal.setAttribute("aria-hidden", "false");
+  }
+
+  function closePngPreview() {
+    pngPreviewModal.classList.remove("is-open");
+    pngPreviewModal.setAttribute("aria-hidden", "true");
+  }
+
+  function downloadPreviewPngFiles() {
+    if (!pngPreviewFiles.length) {
+      alert("Chưa có PNG để tải.");
+      return;
+    }
+
+    pngPreviewFiles.forEach((file, index) => {
+      window.setTimeout(() => {
+        const link = document.createElement("a");
+        link.download = file.name;
+        link.href = file.url;
+        link.click();
+      }, index * 120);
+    });
+  }
+
+  async function exportPagesAsPng() {
+    if (!hasGeneratedDocument) {
+      alert("Hãy tạo biên bản trước khi xuất PNG.");
+      return;
+    }
+
+    const pageEls = Array.from(pagesWrapper.querySelectorAll(".page, .page-continuation"));
+    if (!pageEls.length) return alert("Chưa có trang biên bản để xuất.");
+    if (!window.html2canvas) return alert("Chưa tải được thư viện xuất PNG. Hãy kiểm tra kết nối mạng.");
+
+    const oldTransform = pagesWrapper.style.transform;
+    const oldHeight = previewShell.style.height;
+    pagesWrapper.style.transform = "";
+    previewShell.style.height = "";
+
+    try {
+      setExportBusy(true);
+      if (document.fonts && document.fonts.ready) await document.fonts.ready.catch(() => {});
+      await SignatureAlgorithm.paintSignatures(pagesWrapper);
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const files = [];
+      for (let i = 0; i < pageEls.length; i++) {
+        const canvas = await html2canvas(pageEls[i], {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true,
+          logging: false
+        });
+        const pageNo = String(i + 1).padStart(2, "0");
+        files.push({
+          name: `bien-ban-ban-giao-${pageNo}.png`,
+          url: canvas.toDataURL("image/png")
+        });
+      }
+      showPngPreview(files);
+    } catch (err) {
+      console.error(err);
+      alert("Không xuất được PNG. Nếu lỗi do logo online, hãy thử lại khi có mạng ổn định.");
+    } finally {
+      setExportBusy(false);
+      pagesWrapper.style.transform = oldTransform;
+      previewShell.style.height = oldHeight;
+      schedulePreviewFit();
+    }
+  }
+
+  showInitialTemplate();
+  updateReceiverStatus();
+
+  inventoryFile.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return alert("Chọn file kiểm kho (.xlsx)");
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, { type: "array" });
+        const sh = wb.Sheets[wb.SheetNames[0]];
+        const aoa = XLSX.utils.sheet_to_json(sh, { header: 1, defval: "" });
+        empMap = {};
+
+        for (let i = 0; i < aoa.length; i++) {
+          const row = aoa[i];
+          const emp = String(row[12] || "").trim();
+          const code = String(row[0] || "").trim();
+          if (emp && code) {
+            if (!empMap[emp]) empMap[emp] = [];
+            empMap[emp].push(code);
+          }
+        }
+
+        employeeSelect.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
+        Object.keys(empMap).sort((a, b) => a.localeCompare(b, "vi")).forEach((k) => {
+          const o = document.createElement("option");
+          o.value = k;
+          o.textContent = k;
+          employeeSelect.appendChild(o);
+        });
+
+        alert("Đã nạp dữ liệu nhân viên từ Excel.");
+      } catch (err) {
+        console.error(err);
+        alert("Lỗi đọc file Excel.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  btnGenerate.addEventListener("click", async () => {
+    const empName = employeeSelect.value;
+    if (!empName) return alert("Hãy chọn nhân viên bàn giao.");
+
+    await signatureFontsReady;
+    readReceiverNamesForGenerate();
+    activeEmpName = empName;
+    activeCodes = empMap[empName] || [];
+    hasGeneratedDocument = true;
+    ensureHandoverSignature(empName, true);
+    paginateRows(activeEmpName, activeCodes);
+  });
+
+  btnToggleReceiver.addEventListener("click", () => {
+    receiverPanel.classList.toggle("is-open");
+    if (receiverPanel.classList.contains("is-open")) {
+      receiverNamesInput.focus();
+    }
+  });
+
+  btnSaveReceiver.addEventListener("click", () => {
+    saveReceiverNames(false);
+  });
+
+  btnExportPng.addEventListener("click", exportPagesAsPng);
+  btnDownloadPreviewPng.addEventListener("click", downloadPreviewPngFiles);
+  btnClosePngPreview.addEventListener("click", closePngPreview);
+  pngPreviewModal.addEventListener("click", (event) => {
+    if (event.target === pngPreviewModal) closePngPreview();
+  });
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && pngPreviewModal.classList.contains("is-open")) {
+      closePngPreview();
+    }
+  });
+  bcSelect.addEventListener("change", rerenderCurrentDocument);
+  window.addEventListener("resize", fitPreviewToScreen);
+  btnPrint.addEventListener("click", () => window.print());
+</script>
+</body>
+</html>
