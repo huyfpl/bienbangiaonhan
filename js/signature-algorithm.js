@@ -88,20 +88,21 @@
   function makeSignatureState(kind = "normal", role = "handover") {
     const isCompact = kind === "compact";
     const direction = role === "receiver" ? -1 : 1;
+    const fontSize = role === "receiver" ? (isCompact ? 25 : 28) : SIGNATURE_FONT_SIZE;
 
     return {
       role,
       fontFamily: pickSignatureFont(),
-      fontSize: SIGNATURE_FONT_SIZE,
+      fontSize,
       rotate: randomBetween(role === "receiver" ? -3.2 : -1.5, role === "receiver" ? 1.1 : 4.2, 1),
       skew: randomBetween(role === "receiver" ? -5.5 : -3, role === "receiver" ? 1.5 : 5.5, 1),
-      scaleX: 1,
+      scaleX: role === "receiver" ? randomBetween(1.04, 1.11, 2) : 1,
       y: randomBetween(-1.4, 1.6, 1),
       lineIndent: role === "receiver" ? randomBetween(-2.2, 2.8, 1) : 0,
       lineShift: role === "receiver" ? randomBetween(-0.6, 0.7, 1) : 0,
       letterSpacing: 0.12,
       color: pickInkColor(role),
-      opacity: randomBetween(role === "receiver" ? 0.68 : 0.72, role === "receiver" ? 0.82 : 0.86, 2),
+      opacity: randomBetween(role === "receiver" ? 0.82 : 0.72, role === "receiver" ? 0.95 : 0.86, 2),
       roughOffsetX: randomBetween(-0.35, 0.35, 2),
       roughOffsetY: randomBetween(-0.28, 0.28, 2),
       lightOffsetX: direction * randomBetween(0.18, 0.38, 2),
@@ -137,6 +138,19 @@
     let cursor = x;
     Array.from(text).forEach((char) => {
       ctx.fillText(char, cursor, y);
+      cursor += ctx.measureText(char).width + spacing;
+    });
+  }
+
+  function strokeTextWithSpacing(ctx, text, x, y, spacing) {
+    if (!spacing) {
+      ctx.strokeText(text, x, y);
+      return;
+    }
+
+    let cursor = x;
+    Array.from(text).forEach((char) => {
+      ctx.strokeText(char, cursor, y);
       cursor += ctx.measureText(char).width + spacing;
     });
   }
@@ -192,9 +206,16 @@
     ctx.globalAlpha = state.opacity;
     ctx.filter = "none";
     ctx.fillStyle = gradient;
+    if (state.role === "receiver") {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 0.58;
+      ctx.strokeStyle = rgba(dark, 0.42);
+      strokeTextWithSpacing(ctx, name, 0, 0, state.letterSpacing);
+    }
     drawTextWithSpacing(ctx, name, 0, 0, state.letterSpacing);
 
-    ctx.globalAlpha = 0.14;
+    ctx.globalAlpha = state.role === "receiver" ? 0.22 : 0.14;
     ctx.filter = "none";
     ctx.fillStyle = rgba(dark, 0.82);
     drawTextWithSpacing(ctx, name, state.roughOffsetX, state.roughOffsetY, state.letterSpacing);
@@ -243,11 +264,11 @@
     const itemStyle = mode === "cloud"
       ? `transform:translate(${stagger}px, ${state.lineShift || 0}px);`
       : "";
-    const estimatedNameWidth = Array.from(name).length * 10 + 46;
+    const estimatedNameWidth = Array.from(name).length * (state.role === "receiver" ? 12 : 10) + 56;
     const boxWidth = state.role === "receiver"
-      ? Math.max(96, Math.min(164, estimatedNameWidth))
+      ? Math.max(126, Math.min(216, estimatedNameWidth))
       : 300;
-    const boxHeight = state.role === "receiver" ? 34 : 52;
+    const boxHeight = state.role === "receiver" ? 44 : 52;
 
     signatureStore.set(id, { name, state, boxWidth, boxHeight });
 

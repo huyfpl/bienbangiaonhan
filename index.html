@@ -238,12 +238,16 @@
       margin: 0 auto;
       background-color: var(--paper);
       background-image:
+        repeating-linear-gradient(84deg, transparent 0 22px, rgba(105, 93, 67, 0.024) 22px 23px, transparent 24px 58px),
+        repeating-linear-gradient(174deg, transparent 0 34px, rgba(255, 255, 255, 0.36) 34px 35px, transparent 36px 74px),
+        radial-gradient(ellipse at 24% 18%, rgba(116, 96, 58, 0.04) 0, transparent 34%),
+        radial-gradient(ellipse at 72% 64%, rgba(88, 74, 48, 0.03) 0, transparent 31%),
         radial-gradient(circle at 18% 14%, rgba(80, 65, 35, 0.035) 0 0.35px, transparent 0.8px),
         radial-gradient(circle at 74% 31%, rgba(40, 35, 25, 0.026) 0 0.3px, transparent 0.78px),
         radial-gradient(circle at 38% 72%, rgba(180, 168, 130, 0.045) 0 0.45px, transparent 0.95px),
         repeating-linear-gradient(98deg, rgba(120, 106, 68, 0.018) 0 0.45px, transparent 0.45px 4.8px),
         linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(253, 249, 238, 0.3));
-      background-size: 7px 7px, 9px 9px, 11px 11px, 100% 100%, 100% 100%;
+      background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 7px 7px, 9px 9px, 11px 11px, 100% 100%, 100% 100%;
       padding: 12mm;
       box-shadow:
         inset 0 0 0 1px rgba(150, 135, 100, 0.16),
@@ -335,7 +339,7 @@
     }
     .codes th,
     .codes td {
-      border: 0.6px solid rgba(20, 20, 20, 0.52);
+      border: 0.55px solid rgba(20, 20, 20, 0.44);
       padding: 2px 4px;
       text-align: center;
       vertical-align: middle;
@@ -373,9 +377,35 @@
     .sign-gap { width: 4%; }
 
     .sign-space {
-      height: 58px;
+      height: 76px;
       vertical-align: top !important;
       padding-top: 0 !important;
+    }
+
+    .handover-signature {
+      min-height: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .handover-signature .signature-list {
+      min-height: 50px;
+    }
+
+    .handover-full-name {
+      margin-top: -5px;
+      font-size: 13px;
+      line-height: 1.12;
+      font-weight: 700;
+    }
+
+    .receiver-confirmation {
+      margin-top: -2px;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 700;
     }
 
     .signature-list {
@@ -393,7 +423,7 @@
 
     .signature-list.receiver-cloud {
       display: flex;
-      min-height: 30px;
+      min-height: 42px;
       flex-direction: row;
       flex-wrap: wrap;
       align-items: center;
@@ -416,21 +446,21 @@
 
     .receiver-cloud .signature-item {
       width: auto;
-      min-height: 22px;
+      min-height: 36px;
       align-items: center;
       flex: 0 0 auto;
-      margin: -8px -24px -8px;
+      margin: -5px -18px -5px;
     }
 
     .receiver-cloud .signature-item + .signature-item {
-      margin-left: -8px;
+      margin-left: -6px;
     }
 
     .signature-row-break {
       flex-basis: 100%;
       width: 0;
       height: 0;
-      margin-top: -18px;
+      margin-top: -12px;
     }
 
     .signature-canvas {
@@ -444,6 +474,20 @@
     }
 
     .tbl-wrap { overflow: hidden; }
+
+    .is-exporting-png .logo-cell img {
+      filter: grayscale(1) brightness(0);
+    }
+
+    .is-exporting-png .codes th,
+    .is-exporting-png .codes td {
+      border-color: rgba(20, 20, 20, 0.34);
+      border-width: 0.45px;
+    }
+
+    .is-exporting-png .codes td.stt {
+      font-weight: 500;
+    }
 
     .png-preview-modal {
       position: fixed;
@@ -581,7 +625,7 @@
       }
       .png-preview-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .png-preview-actions button {
         width: 100%;
@@ -666,6 +710,7 @@
           <div class="png-preview-note" id="pngPreviewNote">Kiểm tra ảnh trước khi tải xuống.</div>
         </div>
         <div class="png-preview-actions">
+          <button type="button" id="btnCopyPreviewPng" class="secondary">Copy PNG</button>
           <button type="button" id="btnDownloadPreviewPng">Tải PNG</button>
           <button type="button" id="btnClosePngPreview" class="ghost">Đóng</button>
         </div>
@@ -713,6 +758,7 @@
   const pngPreviewModal = document.getElementById("pngPreviewModal");
   const pngPreviewBody = document.getElementById("pngPreviewBody");
   const pngPreviewNote = document.getElementById("pngPreviewNote");
+  const btnCopyPreviewPng = document.getElementById("btnCopyPreviewPng");
   const btnDownloadPreviewPng = document.getElementById("btnDownloadPreviewPng");
   const btnClosePngPreview = document.getElementById("btnClosePngPreview");
 
@@ -726,6 +772,7 @@
   let activeCodes = [];
   let hasGeneratedDocument = false;
   let pngPreviewFiles = [];
+  let blackLogoDataUrl = "";
   const signatureFontsReady = SignatureAlgorithm.loadFontsFromFolder("font");
 
   function escapeHtml(s) {
@@ -758,6 +805,28 @@
   function getBcInfo() {
     const maBC = bcSelect.value || Object.keys(bcMap)[0];
     return { maBC, tenBC: bcMap[maBC] || "" };
+  }
+
+  function getHandoverSignName(fullName) {
+    const words = String(fullName || "").trim().split(/\s+/).filter(Boolean);
+    return (words[words.length - 1] || fullName || "").toLocaleLowerCase("vi");
+  }
+
+  function fileDateString(date = new Date()) {
+    return `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`;
+  }
+
+  function sanitizeFileNamePart(value) {
+    return String(value || "bien_ban_ban_giao")
+      .trim()
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "")
+      .replace(/\s+/g, "_")
+      .replace(/_+/g, "_") || "bien_ban_ban_giao";
+  }
+
+  function pngFileName(index, total) {
+    const pageSuffix = total > 1 ? `_trang_${String(index + 1).padStart(2, "0")}` : "";
+    return `${sanitizeFileNamePart(activeEmpName)}${fileDateString()}${pageSuffix}.png`;
   }
 
   function ensureHandoverSignature(empName, force = false) {
@@ -831,8 +900,14 @@
   }
 
   function confirmSignHtml(empName) {
+    const handoverSignName = getHandoverSignName(empName);
     const handoverSignature = empName
-      ? SignatureAlgorithm.renderSignatureGroup([empName], [ensureHandoverSignature(empName)], true)
+      ? `
+        <div class="handover-signature">
+          ${SignatureAlgorithm.renderSignatureGroup([handoverSignName], [ensureHandoverSignature(empName)], true)}
+         
+        </div>
+      `
       : '<div class="signature-empty"></div>';
     const receiverSignature = SignatureAlgorithm.renderSignatureGroup(receiverNames, receiverSignatureStates, receiverSignaturesReady);
 
@@ -856,6 +931,11 @@
           <td>(Ký, ghi rõ họ tên)</td>
           <td></td>
           <td>(Ký, ghi rõ họ tên)</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="receiver-confirmation">Tôi xác nhận đã nhận đủ hàng</td>
         </tr>
       </table>
     `;
@@ -904,7 +984,7 @@
           <tr><td class="info-left"><b>Bên Nhận Bàn Giao (B):</b></td><td></td></tr>
           <tr>
             <td class="info-left">Ông/Bà: <span class="receiver-names">${receiverDisplay}</span></td>
-            <td class="info-right">Chức vụ: ................................</td>
+            <td class="info-right">Chức vụ: <b>Shop</b></td>
           </tr>
         </table>
 
@@ -948,10 +1028,10 @@
   }
 
   function rowsLimitWithSignature() {
-    if (receiverNames.length > 4) return 30;
-    if (receiverNames.length > 2) return 34;
-    if (receiverNames.length > 0) return 38;
-    return 40;
+    if (receiverNames.length > 4) return 27;
+    if (receiverNames.length > 2) return 31;
+    if (receiverNames.length > 0) return 35;
+    return 37;
   }
 
   function paginateRows(empName, codes) {
@@ -1045,25 +1125,95 @@
     }
   }
 
+  function canvasToPngBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Không tạo được PNG blob."));
+      }, "image/png");
+    });
+  }
+
+  function blobToObjectUrl(blob) {
+    return URL.createObjectURL(blob);
+  }
+
+  async function makeBlackLogoDataUrl() {
+    if (blackLogoDataUrl) return blackLogoDataUrl;
+
+    blackLogoDataUrl = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          for (let i = 0; i < imageData.data.length; i += 4) {
+            if (imageData.data[i + 3] > 0) {
+              imageData.data[i] = 0;
+              imageData.data[i + 1] = 0;
+              imageData.data[i + 2] = 0;
+            }
+          }
+          ctx.putImageData(imageData, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = () => reject(new Error("Không tải được logo để đổi màu đen."));
+      img.src = LOGO_URL;
+    });
+
+    return blackLogoDataUrl;
+  }
+
+  async function waitForImages(root) {
+    const images = Array.from(root.querySelectorAll("img"));
+    await Promise.allSettled(images.map((img) => {
+      if (img.complete && img.naturalWidth) return Promise.resolve();
+      if (img.decode) return img.decode();
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    }));
+  }
+
   function setExportBusy(isBusy) {
     btnExportPng.disabled = isBusy;
     btnExportPng.textContent = isBusy ? "Đang tạo PNG..." : "Xuất PNG";
   }
 
+  function setCopyBusy(isBusy) {
+    btnCopyPreviewPng.disabled = isBusy;
+    btnCopyPreviewPng.textContent = isBusy ? "Đang copy..." : "Copy PNG";
+  }
+
   function clearPngPreview() {
+    pngPreviewFiles.forEach((file) => {
+      if (file.url && file.url.startsWith("blob:")) URL.revokeObjectURL(file.url);
+    });
     pngPreviewFiles = [];
     pngPreviewBody.innerHTML = '<div class="png-preview-empty">Chưa có ảnh xem trước.</div>';
     pngPreviewNote.textContent = "Kiểm tra ảnh trước khi tải xuống.";
   }
 
   function showPngPreview(files) {
+    pngPreviewFiles.forEach((file) => {
+      if (file.url && file.url.startsWith("blob:")) URL.revokeObjectURL(file.url);
+    });
     pngPreviewFiles = files;
     pngPreviewBody.innerHTML = files.map((file, index) => `
       <div class="png-preview-page">
         <img src="${file.url}" alt="Trang PNG ${index + 1}">
       </div>
     `).join("");
-    pngPreviewNote.textContent = `Đã tạo ${files.length} trang PNG. Kiểm tra xong thì bấm Tải PNG.`;
+    pngPreviewNote.textContent = `Đã tạo ${files.length} trang PNG. Có thể Copy PNG hoặc Tải PNG.`;
     pngPreviewModal.classList.add("is-open");
     pngPreviewModal.setAttribute("aria-hidden", "false");
   }
@@ -1089,6 +1239,33 @@
     });
   }
 
+  async function copyPreviewPngFiles() {
+    if (!pngPreviewFiles.length) {
+      alert("Chưa có PNG để copy.");
+      return;
+    }
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      alert("Trình duyệt hiện tại chưa hỗ trợ copy ảnh PNG. Hãy dùng nút Tải PNG.");
+      return;
+    }
+
+    try {
+      setCopyBusy(true);
+      const file = pngPreviewFiles[0];
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": file.blob })
+      ]);
+      pngPreviewNote.textContent = pngPreviewFiles.length > 1
+        ? `Đã copy trang 1/${pngPreviewFiles.length} vào clipboard.`
+        : "Đã copy PNG vào clipboard.";
+    } catch (err) {
+      console.error(err);
+      alert("Không copy được PNG. Hãy thử tải PNG hoặc mở bằng Chrome/Edge.");
+    } finally {
+      setCopyBusy(false);
+    }
+  }
+
   async function exportPagesAsPng() {
     if (!hasGeneratedDocument) {
       alert("Hãy tạo biên bản trước khi xuất PNG.");
@@ -1101,11 +1278,26 @@
 
     const oldTransform = pagesWrapper.style.transform;
     const oldHeight = previewShell.style.height;
+    const logoImgs = Array.from(pagesWrapper.querySelectorAll(".logo-cell img"));
+    const originalLogoSrcs = logoImgs.map((img) => img.getAttribute("src"));
     pagesWrapper.style.transform = "";
     previewShell.style.height = "";
 
     try {
       setExportBusy(true);
+      clearPngPreview();
+      pagesWrapper.classList.add("is-exporting-png");
+
+      try {
+        const blackLogo = await makeBlackLogoDataUrl();
+        logoImgs.forEach((img) => {
+          img.src = blackLogo;
+        });
+      } catch (logoErr) {
+        console.warn("Không đổi được logo sang ảnh đen, dùng CSS filter khi xuất PNG:", logoErr);
+      }
+
+      await waitForImages(pagesWrapper);
       if (document.fonts && document.fonts.ready) await document.fonts.ready.catch(() => {});
       await SignatureAlgorithm.paintSignatures(pagesWrapper);
       await new Promise((resolve) => setTimeout(resolve, 80));
@@ -1118,10 +1310,11 @@
           useCORS: true,
           logging: false
         });
-        const pageNo = String(i + 1).padStart(2, "0");
+        const blob = await canvasToPngBlob(canvas);
         files.push({
-          name: `bien-ban-ban-giao-${pageNo}.png`,
-          url: canvas.toDataURL("image/png")
+          name: pngFileName(i, pageEls.length),
+          url: blobToObjectUrl(blob),
+          blob
         });
       }
       showPngPreview(files);
@@ -1129,6 +1322,10 @@
       console.error(err);
       alert("Không xuất được PNG. Nếu lỗi do logo online, hãy thử lại khi có mạng ổn định.");
     } finally {
+      logoImgs.forEach((img, index) => {
+        img.src = originalLogoSrcs[index] || LOGO_URL;
+      });
+      pagesWrapper.classList.remove("is-exporting-png");
       setExportBusy(false);
       pagesWrapper.style.transform = oldTransform;
       previewShell.style.height = oldHeight;
@@ -1204,6 +1401,7 @@
   });
 
   btnExportPng.addEventListener("click", exportPagesAsPng);
+  btnCopyPreviewPng.addEventListener("click", copyPreviewPngFiles);
   btnDownloadPreviewPng.addEventListener("click", downloadPreviewPngFiles);
   btnClosePngPreview.addEventListener("click", closePngPreview);
   pngPreviewModal.addEventListener("click", (event) => {
