@@ -1,19 +1,33 @@
 (function () {
   let signatureCounter = 0;
   const signatureStore = new Map();
-  const SIGNATURE_FONT_SIZE = 22;
-  const defaultFontFamilies = ["SignatureNiceMemory", "SignatureHarbour"];
+  const DEFAULT_SIGNATURE_FONT_SIZE = 26;
+  const SIGNATURE_INK_COLOR = "#4f63bf";
+  const defaultFontFamilies = ["SignatureMotherland", "SignatureNiceMemory", "SignatureHarbour"];
   let signatureFontFamilies = [...defaultFontFamilies];
   const loadedFontKeys = new Set(defaultFontFamilies);
+  let baseFontSize = DEFAULT_SIGNATURE_FONT_SIZE;
   const fallbackFontFiles = [
     "14TH Nice Memory.otf",
     "14TH Nice Memory.ttf",
-    "Fz-Harbour-Light.ttf"
+    "Fz-Harbour-Light.ttf",
+    "NVN-Motherland-Signature.ttf"
   ];
 
   function randomBetween(min, max, decimals = 2) {
     const value = min + Math.random() * (max - min);
     return Number(value.toFixed(decimals));
+  }
+
+  function normalizeFontSize(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return DEFAULT_SIGNATURE_FONT_SIZE;
+    return Math.max(18, Math.min(34, Math.round(parsed)));
+  }
+
+  function setBaseFontSize(value) {
+    baseFontSize = normalizeFontSize(value);
+    return baseFontSize;
   }
 
   function escapeHtml(s) {
@@ -30,7 +44,7 @@
   }
 
   function fontStack(family) {
-    return `${quoteFontFamily(family)}, "SignatureNiceMemory", "SignatureHarbour", cursive`;
+    return `${quoteFontFamily(family)}, "SignatureMotherland", "SignatureNiceMemory", "SignatureHarbour", cursive`;
   }
 
   function pickSignatureFont() {
@@ -69,11 +83,8 @@
     return { loaded: loadedFamilies.length, total: fontFiles.length };
   }
 
-  function pickInkColor(role) {
-    const handoverPalette = ["#083f95", "#0b4aa2", "#0d55b4", "#174f9f"];
-    const receiverPalette = ["#0d51b5", "#135cc8", "#1b66d1", "#246fd7"];
-    const palette = role === "receiver" ? receiverPalette : handoverPalette;
-    return palette[Math.floor(Math.random() * palette.length)];
+  function pickInkColor() {
+    return SIGNATURE_INK_COLOR;
   }
 
   function makeNoisePoints(count) {
@@ -88,25 +99,26 @@
   function makeSignatureState(kind = "normal", role = "handover") {
     const isCompact = kind === "compact";
     const direction = role === "receiver" ? -1 : 1;
-    const fontSize = role === "receiver" ? (isCompact ? 25 : 28) : SIGNATURE_FONT_SIZE;
+    const fontSize = baseFontSize;
 
     return {
       role,
-      fontFamily: pickSignatureFont(),
+      fontFamily: "SignatureMotherland",
       fontSize,
-      rotate: randomBetween(role === "receiver" ? -3.2 : -1.5, role === "receiver" ? 1.1 : 4.2, 1),
-      skew: randomBetween(role === "receiver" ? -5.5 : -3, role === "receiver" ? 1.5 : 5.5, 1),
-      scaleX: role === "receiver" ? randomBetween(1.04, 1.11, 2) : 1,
+      rotate: randomBetween(-2.2, 2.4, 1),
+      skew: randomBetween(-3.2, 3.2, 1),
+      scaleX: randomBetween(0.98, 1.08, 2),
       y: randomBetween(-1.4, 1.6, 1),
-      lineIndent: role === "receiver" ? randomBetween(-2.2, 2.8, 1) : 0,
+      lineIndent: role === "receiver" ? randomBetween(-2.2, 2.8, 1) : randomBetween(-1.4, 1.4, 1),
       lineShift: role === "receiver" ? randomBetween(-0.6, 0.7, 1) : 0,
-      letterSpacing: 0.12,
-      color: pickInkColor(role),
-      opacity: randomBetween(role === "receiver" ? 0.82 : 0.72, role === "receiver" ? 0.95 : 0.86, 2),
+      letterSpacing: 0.05,
+      color: pickInkColor(),
+      opacity: randomBetween(0.78, 0.9, 2),
       roughOffsetX: randomBetween(-0.35, 0.35, 2),
       roughOffsetY: randomBetween(-0.28, 0.28, 2),
       lightOffsetX: direction * randomBetween(0.18, 0.38, 2),
-      noise: makeNoisePoints(isCompact ? 30 : 38)
+      tail: null,
+      noise: makeNoisePoints(isCompact ? 32 : 38)
     };
   }
 
@@ -175,30 +187,30 @@
     const fontSize = state.fontSize;
     ctx.font = `${fontSize}px ${fontStack(state.fontFamily)}`;
     const width = textWidth(ctx, name, state.letterSpacing);
-    const sidePadding = state.role === "receiver" ? 12 : 22;
+    const sidePadding = 12;
     const maxWidth = logicalWidth - sidePadding * 2;
-    const fitScaleX = Math.min(1, maxWidth / Math.max(width, 1));
+    const fitScaleX = Math.min(state.scaleX, maxWidth / Math.max(width, 1));
 
-    const baseY = logicalHeight * 0.58 + state.y;
+    const baseY = logicalHeight * 0.62 + state.y;
     const dark = state.color;
-    const mid = state.role === "receiver" ? "#1f73db" : "#155fc4";
-    const pale = state.role === "receiver" ? "#6ba9ff" : "#5796f0";
+    const mid = "#6276d0";
+    const pale = "#9cb0ff";
 
     ctx.save();
     ctx.translate(logicalWidth / 2, baseY);
     ctx.rotate((state.rotate * Math.PI) / 180);
     ctx.transform(1, 0, Math.tan((state.skew * Math.PI) / 180), 1, 0, 0);
-    ctx.scale(fitScaleX * state.scaleX, 1);
+    ctx.scale(fitScaleX, 1);
     ctx.translate(-width / 2, 0);
 
     const gradient = ctx.createLinearGradient(0, -fontSize, width, 5);
-    gradient.addColorStop(0, rgba(dark, 0.86));
-    gradient.addColorStop(0.32, rgba(mid, 0.62));
-    gradient.addColorStop(0.58, rgba(pale, 0.36));
-    gradient.addColorStop(0.82, rgba(dark, 0.76));
+    gradient.addColorStop(0, rgba(dark, 0.82));
+    gradient.addColorStop(0.28, rgba(mid, 0.62));
+    gradient.addColorStop(0.54, rgba(pale, 0.28));
+    gradient.addColorStop(0.78, rgba(dark, 0.76));
     gradient.addColorStop(1, rgba(mid, 0.56));
 
-    ctx.globalAlpha = 0.12;
+    ctx.globalAlpha = 0.08;
     ctx.filter = "none";
     ctx.fillStyle = rgba(pale, 0.46);
     drawTextWithSpacing(ctx, name, state.lightOffsetX, -0.4, state.letterSpacing);
@@ -206,34 +218,61 @@
     ctx.globalAlpha = state.opacity;
     ctx.filter = "none";
     ctx.fillStyle = gradient;
-    if (state.role === "receiver") {
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 0.58;
-      ctx.strokeStyle = rgba(dark, 0.42);
-      strokeTextWithSpacing(ctx, name, 0, 0, state.letterSpacing);
-    }
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = Math.max(0.34, fontSize / 62);
+    ctx.strokeStyle = rgba(dark, 0.22);
+    strokeTextWithSpacing(ctx, name, 0, 0, state.letterSpacing);
     drawTextWithSpacing(ctx, name, 0, 0, state.letterSpacing);
 
-    ctx.globalAlpha = state.role === "receiver" ? 0.22 : 0.14;
+    ctx.globalAlpha = 0.1;
     ctx.filter = "none";
     ctx.fillStyle = rgba(dark, 0.82);
     drawTextWithSpacing(ctx, name, state.roughOffsetX, state.roughOffsetY, state.letterSpacing);
 
-    ctx.globalAlpha = 0.13;
+    ctx.globalAlpha = 0.05;
     ctx.fillStyle = rgba("#ffffff", 0.8);
     drawTextWithSpacing(ctx, name, -0.25, -0.25, state.letterSpacing);
 
+    if (state.tail) {
+      const startX = Math.max(width * 0.48, 18);
+      const endX = Math.min(width + state.tail.length, logicalWidth * 0.92);
+      ctx.globalAlpha = 0.76;
+      ctx.strokeStyle = rgba(dark, 0.78);
+      ctx.lineWidth = state.tail.width;
+      ctx.beginPath();
+      ctx.moveTo(startX, state.tail.dip);
+      ctx.bezierCurveTo(
+        startX + 28,
+        state.tail.lift,
+        endX - 34,
+        state.tail.lift,
+        endX,
+        state.tail.lift + 1.4
+      );
+      ctx.stroke();
+    }
+
     ctx.globalCompositeOperation = "destination-out";
     state.noise.forEach((point) => {
-      ctx.globalAlpha = point.a;
+      ctx.globalAlpha = Math.min(0.12, point.a * 1.45);
       ctx.beginPath();
       ctx.arc(point.x % Math.max(width, 1), point.y - logicalHeight * 0.42, point.r, 0, Math.PI * 2);
       ctx.fill();
     });
+    state.noise.slice(0, 14).forEach((point, index) => {
+      const x = point.x % Math.max(width, 1);
+      const y = point.y - logicalHeight * 0.42 + (index % 3) * 0.35;
+      ctx.globalAlpha = Math.min(0.16, point.a * 1.8);
+      ctx.lineWidth = Math.max(0.22, point.r * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 4 + point.r * 12, y + (index % 2 ? 0.3 : -0.2));
+      ctx.stroke();
+    });
 
     ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 0.07;
+    ctx.globalAlpha = 0.045;
     ctx.fillStyle = rgba(dark, 0.75);
     state.noise.slice(0, 16).forEach((point) => {
       ctx.fillRect(point.x % Math.max(width, 1), point.y - logicalHeight * 0.42, point.r * 1.4, Math.max(0.2, point.r * 0.45));
@@ -262,13 +301,13 @@
     const id = `sig-${Date.now()}-${signatureCounter++}`;
     const stagger = [0, 3, -2, 2, -1, 3, -2, 1][index % 8] + (state.lineIndent || 0);
     const itemStyle = mode === "cloud"
-      ? `transform:translate(${stagger}px, ${state.lineShift || 0}px);`
+      ? `transform:translate(${stagger}px, ${state.lineShift || 0}px);z-index:${(index % 5) + 1};`
       : "";
-    const estimatedNameWidth = Array.from(name).length * (state.role === "receiver" ? 12 : 10) + 56;
+    const estimatedNameWidth = Array.from(name).length * Math.max(7, state.fontSize * 0.44) + 38;
     const boxWidth = state.role === "receiver"
-      ? Math.max(126, Math.min(216, estimatedNameWidth))
-      : 300;
-    const boxHeight = state.role === "receiver" ? 44 : 52;
+      ? Math.max(82, Math.min(136, estimatedNameWidth))
+      : Math.max(150, Math.min(270, estimatedNameWidth));
+    const boxHeight = Math.max(48, Math.round(state.fontSize * 2.05));
 
     signatureStore.set(id, { name, state, boxWidth, boxHeight });
 
@@ -286,8 +325,7 @@
     const compactClass = names.length > 2 ? " compact" : "";
     const itemsHtml = names.map((name, index) => {
       const item = signatureItemHtml(name, states[index], index, mode);
-      const shouldBreak = mode === "cloud" && (index + 1) % 2 === 0 && index < names.length - 1;
-      return shouldBreak ? `${item}<span class="signature-row-break"></span>` : item;
+      return item;
     }).join("");
 
     return `
@@ -301,6 +339,7 @@
     loadFontsFromFolder,
     makeSignatureState,
     paintSignatures,
-    renderSignatureGroup
+    renderSignatureGroup,
+    setBaseFontSize
   };
 })();

@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <style>
+    body { margin: 0; background: #e9eef2; }
+    iframe { width: 100vw; height: 100vh; border: 0; }
+  </style>
+</head>
+<body>
+  <iframe id="frame" src="index.html"></iframe>
+  <script>
+    const frame = document.getElementById("frame");
+    frame.addEventListener("load", async () => {
+      const w = frame.contentWindow;
+      const codes = Array.from({ length: 110 }, (_, index) => `JT${String(index + 1).padStart(10, "0")}`);
+      await w.eval("signatureFontsReady");
+      w.document.getElementById("signatureSizeSelect").value = "26";
+      w.eval(`
+        syncSignatureFontSize();
+        receiverNames = ["hung", "anh", "hoa", "binh", "chi"];
+        receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState("compact", "receiver"));
+        receiverSignaturesReady = true;
+      `);
+      w.paginateRows("024c38", codes);
+      await w.SignatureAlgorithm.paintSignatures(w.document);
+    });
+  </script>
+</body>
+</html>

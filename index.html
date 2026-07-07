@@ -22,6 +22,12 @@
       font-display: swap;
     }
 
+    @font-face {
+      font-family: "SignatureMotherland";
+      src: url("font/NVN-Motherland-Signature.ttf") format("truetype");
+      font-display: swap;
+    }
+
     :root {
       --paper: #fffdf8;
       --ink: #111;
@@ -98,7 +104,7 @@
 
     .control-grid {
       display: grid;
-      grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 1fr) minmax(180px, 1fr);
+      grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(145px, 1fr));
       gap: 10px;
       align-items: end;
     }
@@ -266,7 +272,8 @@
       .controls { display: none !important; }
       .png-preview-modal { display: none !important; }
       .preview-shell { overflow: visible; padding: 0; }
-      .pages-wrapper { min-width: 0; display: block; }
+      .pages-wrapper { min-width: 0; display: block; transform: none !important; }
+      .preview-shell { height: auto !important; }
       .page,
       .page-continuation {
         background: #fff !important;
@@ -377,13 +384,13 @@
     .sign-gap { width: 4%; }
 
     .sign-space {
-      height: 76px;
+      height: 84px;
       vertical-align: top !important;
       padding-top: 0 !important;
     }
 
     .handover-signature {
-      min-height: 72px;
+      min-height: 64px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -391,7 +398,8 @@
     }
 
     .handover-signature .signature-list {
-      min-height: 50px;
+      min-height: 60px;
+      grid-template-columns: minmax(150px, 1fr);
     }
 
     .handover-full-name {
@@ -423,13 +431,15 @@
 
     .signature-list.receiver-cloud {
       display: flex;
-      min-height: 42px;
+      width: min(100%, 286px);
+      min-height: 50px;
+      margin: 0 auto;
       flex-direction: row;
       flex-wrap: wrap;
       align-items: center;
       align-content: flex-start;
       justify-content: center;
-      gap: 0;
+      gap: 0 2px;
       padding: 0;
     }
 
@@ -446,14 +456,14 @@
 
     .receiver-cloud .signature-item {
       width: auto;
-      min-height: 36px;
+      min-height: 40px;
       align-items: center;
       flex: 0 0 auto;
-      margin: -5px -18px -5px;
+      margin: -6px -4px;
     }
 
     .receiver-cloud .signature-item + .signature-item {
-      margin-left: -6px;
+      margin-left: 0;
     }
 
     .signature-row-break {
@@ -672,6 +682,16 @@
           </select>
         </label>
 
+        <label class="field">
+          <span>Cỡ chữ ký</span>
+          <select id="signatureSizeSelect" title="Chọn cỡ chữ ký">
+            <option value="22">Nhỏ 22px</option>
+            <option value="26" selected>Vừa 26px</option>
+            <option value="30">Lớn 30px</option>
+            <option value="34">Rất lớn 34px</option>
+          </select>
+        </label>
+
       </div>
 
       <div class="primary-action">
@@ -745,6 +765,7 @@
   const CURRENT_DATE_STR = todayDateString();
   const inventoryFile = document.getElementById("inventoryFile");
   const employeeSelect = document.getElementById("employeeSelect");
+  const signatureSizeSelect = document.getElementById("signatureSizeSelect");
   const btnGenerate = document.getElementById("btnGenerate");
   const btnToggleReceiver = document.getElementById("btnToggleReceiver");
   const btnExportPng = document.getElementById("btnExportPng");
@@ -812,6 +833,14 @@
     return (words[words.length - 1] || fullName || "").toLocaleLowerCase("vi");
   }
 
+  function selectedSignatureFontSize() {
+    return Number(signatureSizeSelect.value) || 26;
+  }
+
+  function syncSignatureFontSize() {
+    SignatureAlgorithm.setBaseFontSize(selectedSignatureFontSize());
+  }
+
   function fileDateString(date = new Date()) {
     return `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`;
   }
@@ -831,6 +860,7 @@
 
   function ensureHandoverSignature(empName, force = false) {
     if (!empName) return null;
+    syncSignatureFontSize();
     if (force || !handoverSignatureState || handoverSignatureName !== empName) {
       handoverSignatureState = SignatureAlgorithm.makeSignatureState("normal", "handover");
       handoverSignatureName = empName;
@@ -839,9 +869,21 @@
   }
 
   function randomizeReceiverSignatures() {
+    syncSignatureFontSize();
     const compact = receiverNames.length > 2;
     receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState(compact ? "compact" : "normal", "receiver"));
     receiverSignaturesReady = receiverNames.length > 0;
+  }
+
+  function refreshSignatureSizing() {
+    syncSignatureFontSize();
+    if (handoverSignatureName) {
+      handoverSignatureState = SignatureAlgorithm.makeSignatureState("normal", "handover");
+    }
+    if (receiverSignaturesReady && receiverNames.length) {
+      randomizeReceiverSignatures();
+    }
+    rerenderCurrentDocument();
   }
 
   function saveReceiverNames(makeSignatures = false) {
@@ -890,6 +932,7 @@
 
   function schedulePreviewFit() {
     requestAnimationFrame(async () => {
+      if (pagesWrapper.classList.contains("is-exporting-png")) return;
       try {
         await SignatureAlgorithm.paintSignatures(pagesWrapper);
       } catch (err) {
@@ -1007,14 +1050,22 @@
     `;
   }
 
+  const TABLE_COLS = 4;
+  const EMPTY_TABLE_ROW_HTML = '<tr><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td></tr>';
+
+  function htmlToElement(html) {
+    const template = document.createElement("template");
+    template.innerHTML = String(html || "").trim();
+    return template.content.firstElementChild;
+  }
+
   function buildTableRows(codes, startIndex, maxRows) {
     const rows = [];
-    const cols = 4;
-    const totalRows = Math.min(maxRows, Math.ceil((codes.length - startIndex) / cols));
+    const totalRows = Math.min(maxRows, Math.ceil((codes.length - startIndex) / TABLE_COLS));
     for (let r = 0; r < totalRows; r++) {
       let rowHtml = "<tr>";
-      for (let c = 0; c < cols; c++) {
-        const idx = r * cols + c + startIndex;
+      for (let c = 0; c < TABLE_COLS; c++) {
+        const idx = r * TABLE_COLS + c + startIndex;
         if (idx < codes.length) {
           rowHtml += `<td class="stt">${idx + 1}</td><td class="code">${escapeHtml(codes[idx])}</td>`;
         } else {
@@ -1027,92 +1078,155 @@
     return rows;
   }
 
-  function rowsLimitWithSignature() {
-    if (receiverNames.length > 4) return 27;
-    if (receiverNames.length > 2) return 31;
-    if (receiverNames.length > 0) return 35;
-    return 37;
+  function appendEmptyRows(tbody, count) {
+    if (count > 0) tbody.insertAdjacentHTML("beforeend", EMPTY_TABLE_ROW_HTML.repeat(count));
+  }
+
+  function createContinuationPage() {
+    const contPage = document.createElement("div");
+    contPage.className = "page-continuation";
+
+    const tblWrap = document.createElement("div");
+    tblWrap.className = "tbl-wrap";
+
+    const table = document.createElement("table");
+    table.className = "codes";
+
+    const tbody = document.createElement("tbody");
+    table.appendChild(tbody);
+    tblWrap.appendChild(table);
+    contPage.appendChild(tblWrap);
+
+    return { page: contPage, tblWrap, tbody };
+  }
+
+  function isPageOverflowing(pageEl) {
+    return pageEl.scrollHeight > pageEl.clientHeight + 2;
+  }
+
+  function appendMeasuredCodeRows(pageEl, tbody, codes, startIndex) {
+    let currentIndex = startIndex;
+
+    while (currentIndex < codes.length) {
+      const rowHtml = buildTableRows(codes, currentIndex, 1)[0];
+      if (!rowHtml) break;
+
+      tbody.insertAdjacentHTML("beforeend", rowHtml);
+      const insertedRow = tbody.lastElementChild;
+
+      if (isPageOverflowing(pageEl)) {
+        insertedRow.remove();
+        if (currentIndex === startIndex) {
+          tbody.insertAdjacentHTML("beforeend", rowHtml);
+          currentIndex += TABLE_COLS;
+        }
+        break;
+      }
+
+      currentIndex += TABLE_COLS;
+    }
+
+    return currentIndex;
+  }
+
+  function removeSignatureFromPage(pageEl) {
+    Array.from(pageEl.children).forEach((child) => {
+      if (child.classList.contains("confirm") || child.classList.contains("sign-table")) {
+        child.remove();
+      }
+    });
+  }
+
+  function appendSignatureToPage(pageEl, empName) {
+    removeSignatureFromPage(pageEl);
+    const tblWrap = pageEl.querySelector(".tbl-wrap");
+    if (tblWrap) tblWrap.insertAdjacentHTML("afterend", confirmSignHtml(empName));
+  }
+
+  function removeEmptyContinuationPages() {
+    Array.from(pagesWrapper.querySelectorAll(".page-continuation")).forEach((pageEl) => {
+      const hasRows = !!pageEl.querySelector(".codes tbody tr");
+      const hasSignature = !!pageEl.querySelector(".confirm, .sign-table");
+      if (!hasRows && !hasSignature) pageEl.remove();
+    });
+  }
+
+  function appendSignatureWithPagination(empName) {
+    const pages = Array.from(pagesWrapper.querySelectorAll(".page, .page-continuation"));
+    const lastPage = pages[pages.length - 1];
+    if (!lastPage) return;
+
+    appendSignatureToPage(lastPage, empName);
+    if (!isPageOverflowing(lastPage)) return;
+
+    removeSignatureFromPage(lastPage);
+
+    const finalPage = createContinuationPage();
+    pagesWrapper.appendChild(finalPage.page);
+
+    const sourceTbody = lastPage.querySelector(".codes tbody");
+    const keepRowsOnSource = lastPage.classList.contains("page") ? 1 : 0;
+
+    while (sourceTbody && sourceTbody.rows.length > keepRowsOnSource) {
+      const row = sourceTbody.rows[sourceTbody.rows.length - 1];
+      finalPage.tbody.insertBefore(row, finalPage.tbody.firstChild);
+
+      appendSignatureToPage(finalPage.page, empName);
+      const overflows = isPageOverflowing(finalPage.page);
+      removeSignatureFromPage(finalPage.page);
+
+      if (overflows) {
+        sourceTbody.appendChild(finalPage.tbody.firstElementChild);
+        break;
+      }
+    }
+
+    appendSignatureToPage(finalPage.page, empName);
+    removeEmptyContinuationPages();
   }
 
   function paginateRows(empName, codes) {
     pagesWrapper.innerHTML = "";
+    pagesWrapper.style.transform = "";
+    previewShell.style.height = "";
+
     const { maBC, tenBC } = getBcInfo();
-    const maxRowsFirstPage = 50;
-    const maxRowsContinuation = 52;
-    const maxRowsLastPage = rowsLimitWithSignature();
-
-    if (!codes || !codes.length) {
-      const firstPage = document.createElement("div");
-      firstPage.innerHTML = createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC);
-      const tbody = firstPage.querySelector(".codes tbody");
-      for (let r = 0; r < 8; r++) {
-        tbody.innerHTML += '<tr><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td></tr>';
-      }
-      firstPage.querySelector(".tbl-wrap").insertAdjacentHTML("afterend", confirmSignHtml(empName));
-      pagesWrapper.appendChild(firstPage);
-      schedulePreviewFit();
-      return;
-    }
-
-    let currentIndex = 0;
-    const firstPage = document.createElement("div");
-    firstPage.innerHTML = createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC);
+    const firstPage = htmlToElement(createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC));
     const firstTbody = firstPage.querySelector(".codes tbody");
-    const firstRowsLimit = codes.length <= maxRowsLastPage * 4 ? maxRowsLastPage : maxRowsFirstPage;
-    const rowsFirst = buildTableRows(codes, currentIndex, firstRowsLimit);
-    firstTbody.innerHTML = rowsFirst.join("");
-    currentIndex += rowsFirst.length * 4;
-
-    if (currentIndex >= codes.length) {
-      firstPage.querySelector(".tbl-wrap").insertAdjacentHTML("afterend", confirmSignHtml(empName));
-      pagesWrapper.appendChild(firstPage);
-      schedulePreviewFit();
-      return;
-    }
-
     pagesWrapper.appendChild(firstPage);
 
-    while (currentIndex < codes.length) {
-      const remainingItems = codes.length - currentIndex;
-      const rowsLimit = remainingItems <= maxRowsLastPage * 4 ? maxRowsLastPage : maxRowsContinuation;
-      const contPage = document.createElement("div");
-      contPage.className = "page-continuation";
-
-      const tblWrap = document.createElement("div");
-      tblWrap.className = "tbl-wrap";
-
-      const table = document.createElement("table");
-      table.className = "codes";
-
-      const tbody = document.createElement("tbody");
-      const rowsCont = buildTableRows(codes, currentIndex, rowsLimit);
-      tbody.innerHTML = rowsCont.join("");
-
-      table.appendChild(tbody);
-      tblWrap.appendChild(table);
-      contPage.appendChild(tblWrap);
-      pagesWrapper.appendChild(contPage);
-
-      currentIndex += rowsCont.length * 4;
-
-      if (currentIndex >= codes.length) {
-        tblWrap.insertAdjacentHTML("afterend", confirmSignHtml(empName));
-      }
+    if (!codes || !codes.length) {
+      appendEmptyRows(firstTbody, 8);
+      appendSignatureWithPagination(empName);
+      schedulePreviewFit();
+      return;
     }
+
+    let currentIndex = appendMeasuredCodeRows(firstPage, firstTbody, codes, 0);
+
+    while (currentIndex < codes.length) {
+      const contPage = createContinuationPage();
+      pagesWrapper.appendChild(contPage.page);
+
+      const nextIndex = appendMeasuredCodeRows(contPage.page, contPage.tbody, codes, currentIndex);
+      currentIndex = nextIndex > currentIndex ? nextIndex : currentIndex + TABLE_COLS;
+    }
+
+    appendSignatureWithPagination(empName);
     schedulePreviewFit();
   }
 
   function showInitialTemplate() {
     pagesWrapper.innerHTML = "";
+    pagesWrapper.style.transform = "";
+    previewShell.style.height = "";
+
     const { maBC, tenBC } = getBcInfo();
-    const firstPage = document.createElement("div");
-    firstPage.innerHTML = createFirstPageSkeleton("", CURRENT_DATE_STR, maBC, tenBC);
+    const firstPage = htmlToElement(createFirstPageSkeleton("", CURRENT_DATE_STR, maBC, tenBC));
     const tbody = firstPage.querySelector(".codes tbody");
-    for (let r = 0; r < 8; r++) {
-      tbody.innerHTML += '<tr><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td><td class="stt">&nbsp;</td><td class="code">&nbsp;</td></tr>';
-    }
-    firstPage.querySelector(".tbl-wrap").insertAdjacentHTML("afterend", confirmSignHtml(""));
+    appendEmptyRows(tbody, 8);
     pagesWrapper.appendChild(firstPage);
+    appendSignatureWithPagination("");
     schedulePreviewFit();
   }
 
@@ -1301,9 +1415,13 @@
       if (document.fonts && document.fonts.ready) await document.fonts.ready.catch(() => {});
       await SignatureAlgorithm.paintSignatures(pagesWrapper);
       await new Promise((resolve) => setTimeout(resolve, 80));
+      pagesWrapper.style.transform = "";
+      previewShell.style.height = "";
 
       const files = [];
       for (let i = 0; i < pageEls.length; i++) {
+        pagesWrapper.style.transform = "";
+        previewShell.style.height = "";
         const canvas = await html2canvas(pageEls[i], {
           backgroundColor: null,
           scale: 2,
@@ -1333,6 +1451,28 @@
     }
   }
 
+  async function printCurrentDocument() {
+    if (hasGeneratedDocument) {
+      paginateRows(activeEmpName, activeCodes);
+    }
+
+    pagesWrapper.style.transform = "";
+    previewShell.style.height = "";
+
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready.catch(() => {});
+      await SignatureAlgorithm.paintSignatures(pagesWrapper);
+    } catch (err) {
+      console.warn("Không vẽ được chữ ký trước khi in:", err);
+    }
+
+    pagesWrapper.style.transform = "";
+    previewShell.style.height = "";
+    window.print();
+    schedulePreviewFit();
+  }
+
+  syncSignatureFontSize();
   showInitialTemplate();
   updateReceiverStatus();
 
@@ -1413,8 +1553,9 @@
     }
   });
   bcSelect.addEventListener("change", rerenderCurrentDocument);
+  signatureSizeSelect.addEventListener("change", refreshSignatureSizing);
   window.addEventListener("resize", fitPreviewToScreen);
-  btnPrint.addEventListener("click", () => window.print());
+  btnPrint.addEventListener("click", printCurrentDocument);
 </script>
 </body>
 </html>
