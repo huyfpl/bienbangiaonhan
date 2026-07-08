@@ -12,16 +12,20 @@
     const frame = document.getElementById("frame");
     frame.addEventListener("load", async () => {
       const w = frame.contentWindow;
-      const codes = Array.from({ length: 110 }, (_, index) => `JT${String(index + 1).padStart(10, "0")}`);
+      const codes = Array.from({ length: 360 }, (_, index) => `JT${String(index + 1).padStart(10, "0")}`);
       await w.eval("signatureFontsReady");
-      w.document.getElementById("signatureSizeSelect").value = "26";
+      w.document.getElementById("signatureSizeInput").value = "28";
       w.eval(`
         syncSignatureFontSize();
-        receiverNames = ["hung", "anh", "hoa", "binh", "chi"];
-        receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState("compact", "receiver"));
+        activeEmpName = "Nguyen Van An";
+        activeCodes = ${JSON.stringify(Array.from({ length: 360 }, (_, index) => `JT${String(index + 1).padStart(10, "0")}`))};
+        hasGeneratedDocument = true;
+        ensureHandoverSignature(activeEmpName, true);
+        receiverNames = ["Tran Thi Binh", "Le Minh Hoa"];
+        receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState("normal", "receiver", [handoverSignatureState.fontFamily]));
         receiverSignaturesReady = true;
       `);
-      w.paginateRows("024c38", codes);
+      w.paginateRows("Nguyen Van An", codes);
       await w.SignatureAlgorithm.paintSignatures(w.document);
     });
   </script>

@@ -2,12 +2,14 @@
   let signatureCounter = 0;
   const signatureStore = new Map();
   const DEFAULT_SIGNATURE_FONT_SIZE = 26;
-  const SIGNATURE_INK_COLOR = "#4f63bf";
+  const SIGNATURE_INK_COLORS = ["#34383d", "#3c444b", "#293a45", "#46494d", "#2f3940"];
   const defaultFontFamilies = ["SignatureMotherland", "SignatureNiceMemory", "SignatureHarbour"];
   let signatureFontFamilies = [...defaultFontFamilies];
   const loadedFontKeys = new Set(defaultFontFamilies);
+  const loadedFontMeta = [];
   let baseFontSize = DEFAULT_SIGNATURE_FONT_SIZE;
-  const fallbackFontFiles = [
+  let fontBag = [];
+  const knownFontFiles = [
     "14TH Nice Memory.otf",
     "14TH Nice Memory.ttf",
     "Fz-Harbour-Light.ttf",
@@ -22,7 +24,7 @@
   function normalizeFontSize(value) {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return DEFAULT_SIGNATURE_FONT_SIZE;
-    return Math.max(18, Math.min(34, Math.round(parsed)));
+    return Math.max(1, Math.min(50, Math.round(parsed)));
   }
 
   function setBaseFontSize(value) {
@@ -47,8 +49,25 @@
     return `${quoteFontFamily(family)}, "SignatureMotherland", "SignatureNiceMemory", "SignatureHarbour", cursive`;
   }
 
-  function pickSignatureFont() {
-    return signatureFontFamilies[Math.floor(Math.random() * signatureFontFamilies.length)] || "SignatureNiceMemory";
+  function shuffledFonts(fonts) {
+    const next = [...fonts];
+    for (let i = next.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    return next;
+  }
+
+  function pickSignatureFont(avoidFonts = []) {
+    const avoid = new Set(Array.isArray(avoidFonts) ? avoidFonts.filter(Boolean) : [avoidFonts].filter(Boolean));
+    let candidates = signatureFontFamilies.filter((family) => !avoid.has(family));
+    if (!candidates.length) candidates = [...signatureFontFamilies];
+    if (!fontBag.length || !fontBag.some((family) => candidates.includes(family))) {
+      fontBag = shuffledFonts(signatureFontFamilies);
+    }
+    const bagIndex = fontBag.findIndex((family) => candidates.includes(family));
+    if (bagIndex >= 0) return fontBag.splice(bagIndex, 1)[0];
+    return candidates[Math.floor(Math.random() * candidates.length)] || "SignatureNiceMemory";
   }
 
   function fontFamilyFromFile(fileName) {
@@ -60,8 +79,36 @@
     return `${base}${encodeURIComponent(fileName).replaceAll("%2F", "/")}`;
   }
 
-  async function loadFontsFromFolder(folderPath = "font") {
-    const fontFiles = Array.from(new Set(fallbackFontFiles));
+  function normalizeFontFileName(value) {
+    const raw = String(value || "").trim().replaceAll("\\", "/").split("?")[0].split("#")[0];
+    const name = decodeURIComponent(raw.split("/").pop() || "");
+    return /\.(ttf|otf|woff2?)$/i.test(name) ? name : "";
+  }
+
+  async function readDirectoryFontList(folderPath) {
+    if (!window.fetch || !window.DOMParser) return [];
+    try {
+      const base = folderPath.endsWith("/") ? folderPath : `${folderPath}/`;
+      const response = await fetch(base, { cache: "no-store" });
+      const contentType = response.headers.get("content-type") || "";
+      if (!response.ok || !contentType.includes("text/html")) return [];
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const fromLinks = Array.from(doc.querySelectorAll("a[href]"))
+        .map((link) => normalizeFontFileName(link.getAttribute("href")))
+        .filter(Boolean);
+      const fromText = Array.from(html.matchAll(/(?:href=["'])?([^"'<>]+?\.(?:ttf|otf|woff2?))(?:["'<>])/gi))
+        .map((match) => normalizeFontFileName(match[1]))
+        .filter(Boolean);
+      return Array.from(new Set([...fromLinks, ...fromText])).sort((a, b) => a.localeCompare(b, "vi"));
+    } catch (err) {
+      return [];
+    }
+  }
+
+  async function loadFontsFromFolder(folderPath = "fonts", fallbackFolderPath = "font") {
+    const directoryFiles = await readDirectoryFontList(folderPath);
+    const fontFiles = Array.from(new Set([...(directoryFiles.length ? directoryFiles : knownFontFiles)].map(normalizeFontFileName).filter(Boolean)));
     const loadedFamilies = [];
 
     for (const fileName of fontFiles) {
@@ -69,22 +116,38 @@
       if (loadedFontKeys.has(family)) continue;
 
       try {
-        const face = new FontFace(family, `url("${fontUrlFromName(folderPath, fileName)}")`);
-        await face.load();
-        document.fonts.add(face);
-        loadedFontKeys.add(family);
-        loadedFamilies.push(family);
+        let loadedFace = null;
+        for (const folder of [folderPath, fallbackFolderPath].filter(Boolean)) {
+          try {
+            const face = new FontFace(family, `url("${fontUrlFromName(folder, fileName)}")`);
+            await face.load();
+            loadedFace = face;
+            break;
+          } catch (err) {
+            if (folder === fallbackFolderPath) throw err;
+          }
+        }
+        if (loadedFace) {
+          document.fonts.add(loadedFace);
+          loadedFontKeys.add(family);
+          loadedFontMeta.push({ family, fileName });
+          loadedFamilies.push(family);
+        }
       } catch (err) {
         console.warn("Cannot load signature font:", fileName, err);
       }
     }
 
-    signatureFontFamilies = [...defaultFontFamilies, ...Array.from(loadedFontKeys).filter((family) => !defaultFontFamilies.includes(family))];
-    return { loaded: loadedFamilies.length, total: fontFiles.length };
+    const loadedAutoFamilies = Array.from(loadedFontKeys).filter((family) => !defaultFontFamilies.includes(family));
+    signatureFontFamilies = loadedAutoFamilies.length ? loadedAutoFamilies : [...defaultFontFamilies];
+    fontBag = shuffledFonts(signatureFontFamilies);
+    console.info("Signature fonts loaded from fonts/:", loadedFontMeta.map((font) => font.fileName));
+    return { loaded: loadedFamilies.length, total: fontFiles.length, files: loadedFontMeta.map((font) => font.fileName) };
   }
 
   function pickInkColor() {
-    return SIGNATURE_INK_COLOR;
+    const color = SIGNATURE_INK_COLORS[Math.floor(Math.random() * SIGNATURE_INK_COLORS.length)];
+    return shiftHexColor(color, randomBetween(-10, 12, 0));
   }
 
   function makeNoisePoints(count) {
@@ -96,19 +159,23 @@
     }));
   }
 
-  function makeSignatureState(kind = "normal", role = "handover") {
+  function makeSignatureState(kind = "normal", role = "handover", avoidFonts = []) {
     const isCompact = kind === "compact";
     const direction = role === "receiver" ? -1 : 1;
     const fontSize = baseFontSize;
 
     return {
       role,
-      fontFamily: "SignatureMotherland",
+      fontFamily: pickSignatureFont(avoidFonts),
       fontSize,
       rotate: randomBetween(-2.2, 2.4, 1),
       skew: randomBetween(-3.2, 3.2, 1),
       scaleX: randomBetween(0.98, 1.08, 2),
+      x: randomBetween(-8, 8, 1),
       y: randomBetween(-1.4, 1.6, 1),
+      fullNameX: randomBetween(-2.2, 2.2, 1),
+      fullNameColorShift: randomBetween(-4, 5, 0),
+      nameGap: role === "receiver" ? randomBetween(7, 11, 1) : randomBetween(9, 14, 1),
       lineIndent: role === "receiver" ? randomBetween(-2.2, 2.8, 1) : randomBetween(-1.4, 1.4, 1),
       lineShift: role === "receiver" ? randomBetween(-0.6, 0.7, 1) : 0,
       letterSpacing: 0.05,
@@ -129,6 +196,25 @@
       g: parseInt(value.slice(2, 4), 16),
       b: parseInt(value.slice(4, 6), 16)
     };
+  }
+
+  function rgbToHex({ r, g, b }) {
+    return `#${[r, g, b].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")).join("")}`;
+  }
+
+  function shiftHexColor(hex, amount) {
+    const rgb = hexToRgb(hex);
+    return rgbToHex({ r: rgb.r + amount, g: rgb.g + amount, b: rgb.b + amount });
+  }
+
+  function mixHexColor(hex, targetHex, amount) {
+    const from = hexToRgb(hex);
+    const to = hexToRgb(targetHex);
+    return rgbToHex({
+      r: from.r + (to.r - from.r) * amount,
+      g: from.g + (to.g - from.g) * amount,
+      b: from.b + (to.b - from.b) * amount
+    });
   }
 
   function rgba(hex, alpha) {
@@ -167,11 +253,85 @@
     });
   }
 
+  function drawLine(ctx, text, options) {
+    const {
+      x,
+      y,
+      fontSize,
+      fontFamily,
+      boxWidth,
+      scaleX,
+      rotate,
+      skew,
+      color,
+      opacity,
+      letterSpacing,
+      lightOffsetX,
+      roughOffsetX,
+      roughOffsetY,
+      noise,
+      sidePadding = 12,
+      lineWidthBoost = 1
+    } = options;
+
+    ctx.font = `${fontSize}px ${fontStack(fontFamily)}`;
+    const width = textWidth(ctx, text, letterSpacing);
+    const maxWidth = boxWidth - sidePadding * 2;
+    const fitScaleX = Math.min(scaleX, maxWidth / Math.max(width, 1));
+    const dark = color;
+    const mid = mixHexColor(color, "#6f7479", 0.34);
+    const pale = mixHexColor(color, "#f2f1ec", 0.58);
+
+    ctx.save();
+    ctx.translate(boxWidth / 2 + x, y);
+    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.transform(1, 0, Math.tan((skew * Math.PI) / 180), 1, 0, 0);
+    ctx.scale(fitScaleX, 1);
+    ctx.translate(-width / 2, 0);
+
+    const gradient = ctx.createLinearGradient(0, -fontSize, width, 5);
+    gradient.addColorStop(0, rgba(dark, 0.86));
+    gradient.addColorStop(0.28, rgba(mid, 0.64));
+    gradient.addColorStop(0.54, rgba(pale, 0.22));
+    gradient.addColorStop(0.78, rgba(dark, 0.78));
+    gradient.addColorStop(1, rgba(mid, 0.58));
+
+    ctx.globalAlpha = 0.07;
+    ctx.filter = "none";
+    ctx.fillStyle = rgba(pale, 0.38);
+    drawTextWithSpacing(ctx, text, lightOffsetX, -0.4, letterSpacing);
+
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = gradient;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = Math.max(0.28, fontSize / 72) * lineWidthBoost;
+    ctx.strokeStyle = rgba(dark, 0.2);
+    strokeTextWithSpacing(ctx, text, 0, 0, letterSpacing);
+    drawTextWithSpacing(ctx, text, 0, 0, letterSpacing);
+
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = rgba(dark, 0.7);
+    drawTextWithSpacing(ctx, text, roughOffsetX, roughOffsetY, letterSpacing);
+
+    ctx.globalCompositeOperation = "destination-out";
+    noise.slice(0, Math.max(8, Math.round(noise.length * 0.55))).forEach((point) => {
+      ctx.globalAlpha = Math.min(0.11, point.a * 1.35);
+      ctx.beginPath();
+      ctx.arc(point.x % Math.max(width, 1), point.y - 34, point.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.globalCompositeOperation = "source-over";
+    ctx.restore();
+  }
+
   function drawSignatureCanvas(canvas, record) {
-    const { name, state, boxWidth, boxHeight } = record;
+    const { signatureText, fullName, showFullName, state, boxWidth, boxHeight } = record;
     const logicalWidth = boxWidth;
     const logicalHeight = boxHeight;
-    const ratio = 2;
+    const dpr = window.devicePixelRatio || 1;
+    const ratio = Math.max(4, Math.min(8, Math.ceil(dpr * 4)));
 
     canvas.width = logicalWidth * ratio;
     canvas.height = logicalHeight * ratio;
@@ -180,105 +340,58 @@
 
     const ctx = canvas.getContext("2d");
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.clearRect(0, 0, logicalWidth, logicalHeight);
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "left";
 
     const fontSize = state.fontSize;
-    ctx.font = `${fontSize}px ${fontStack(state.fontFamily)}`;
-    const width = textWidth(ctx, name, state.letterSpacing);
-    const sidePadding = 12;
-    const maxWidth = logicalWidth - sidePadding * 2;
-    const fitScaleX = Math.min(state.scaleX, maxWidth / Math.max(width, 1));
+    const nameFontSize = Math.max(1, fontSize * 0.72);
+    const topY = showFullName === false
+      ? Math.max(fontSize + 4, logicalHeight * 0.68 + state.y)
+      : Math.max(fontSize + 4, logicalHeight * 0.38 + state.y);
+    const nameY = Math.min(logicalHeight - 7, topY + fontSize * 0.82 + (state.nameGap || 9));
 
-    const baseY = logicalHeight * 0.62 + state.y;
-    const dark = state.color;
-    const mid = "#6276d0";
-    const pale = "#9cb0ff";
+    drawLine(ctx, signatureText, {
+      x: state.x,
+      y: topY,
+      fontSize,
+      fontFamily: state.fontFamily,
+      boxWidth: logicalWidth,
+      scaleX: state.scaleX,
+      rotate: state.rotate,
+      skew: state.skew,
+      color: state.color,
+      opacity: state.opacity,
+      letterSpacing: state.letterSpacing,
+      lightOffsetX: state.lightOffsetX,
+      roughOffsetX: state.roughOffsetX,
+      roughOffsetY: state.roughOffsetY,
+      noise: state.noise,
+      sidePadding: showFullName === false ? 7 : 12,
+      lineWidthBoost: showFullName === false ? 1.32 : 1
+    });
 
-    ctx.save();
-    ctx.translate(logicalWidth / 2, baseY);
-    ctx.rotate((state.rotate * Math.PI) / 180);
-    ctx.transform(1, 0, Math.tan((state.skew * Math.PI) / 180), 1, 0, 0);
-    ctx.scale(fitScaleX, 1);
-    ctx.translate(-width / 2, 0);
-
-    const gradient = ctx.createLinearGradient(0, -fontSize, width, 5);
-    gradient.addColorStop(0, rgba(dark, 0.82));
-    gradient.addColorStop(0.28, rgba(mid, 0.62));
-    gradient.addColorStop(0.54, rgba(pale, 0.28));
-    gradient.addColorStop(0.78, rgba(dark, 0.76));
-    gradient.addColorStop(1, rgba(mid, 0.56));
-
-    ctx.globalAlpha = 0.08;
-    ctx.filter = "none";
-    ctx.fillStyle = rgba(pale, 0.46);
-    drawTextWithSpacing(ctx, name, state.lightOffsetX, -0.4, state.letterSpacing);
-
-    ctx.globalAlpha = state.opacity;
-    ctx.filter = "none";
-    ctx.fillStyle = gradient;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineWidth = Math.max(0.34, fontSize / 62);
-    ctx.strokeStyle = rgba(dark, 0.22);
-    strokeTextWithSpacing(ctx, name, 0, 0, state.letterSpacing);
-    drawTextWithSpacing(ctx, name, 0, 0, state.letterSpacing);
-
-    ctx.globalAlpha = 0.1;
-    ctx.filter = "none";
-    ctx.fillStyle = rgba(dark, 0.82);
-    drawTextWithSpacing(ctx, name, state.roughOffsetX, state.roughOffsetY, state.letterSpacing);
-
-    ctx.globalAlpha = 0.05;
-    ctx.fillStyle = rgba("#ffffff", 0.8);
-    drawTextWithSpacing(ctx, name, -0.25, -0.25, state.letterSpacing);
-
-    if (state.tail) {
-      const startX = Math.max(width * 0.48, 18);
-      const endX = Math.min(width + state.tail.length, logicalWidth * 0.92);
-      ctx.globalAlpha = 0.76;
-      ctx.strokeStyle = rgba(dark, 0.78);
-      ctx.lineWidth = state.tail.width;
-      ctx.beginPath();
-      ctx.moveTo(startX, state.tail.dip);
-      ctx.bezierCurveTo(
-        startX + 28,
-        state.tail.lift,
-        endX - 34,
-        state.tail.lift,
-        endX,
-        state.tail.lift + 1.4
-      );
-      ctx.stroke();
+    if (showFullName !== false) {
+      drawLine(ctx, fullName, {
+        x: state.x * 0.45 + state.fullNameX,
+        y: nameY,
+        fontSize: nameFontSize,
+        fontFamily: state.fontFamily,
+        boxWidth: logicalWidth,
+        scaleX: Math.min(1.02, state.scaleX),
+        rotate: state.rotate * 0.35,
+        skew: state.skew * 0.45,
+        color: shiftHexColor(state.color, state.fullNameColorShift),
+        opacity: Math.min(0.94, state.opacity + 0.03),
+        letterSpacing: 0,
+        lightOffsetX: state.lightOffsetX * 0.45,
+        roughOffsetX: state.roughOffsetX * 0.7,
+        roughOffsetY: state.roughOffsetY * 0.6,
+        noise: state.noise.slice().reverse()
+      });
     }
-
-    ctx.globalCompositeOperation = "destination-out";
-    state.noise.forEach((point) => {
-      ctx.globalAlpha = Math.min(0.12, point.a * 1.45);
-      ctx.beginPath();
-      ctx.arc(point.x % Math.max(width, 1), point.y - logicalHeight * 0.42, point.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    state.noise.slice(0, 14).forEach((point, index) => {
-      const x = point.x % Math.max(width, 1);
-      const y = point.y - logicalHeight * 0.42 + (index % 3) * 0.35;
-      ctx.globalAlpha = Math.min(0.16, point.a * 1.8);
-      ctx.lineWidth = Math.max(0.22, point.r * 0.5);
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 4 + point.r * 12, y + (index % 2 ? 0.3 : -0.2));
-      ctx.stroke();
-    });
-
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 0.045;
-    ctx.fillStyle = rgba(dark, 0.75);
-    state.noise.slice(0, 16).forEach((point) => {
-      ctx.fillRect(point.x % Math.max(width, 1), point.y - logicalHeight * 0.42, point.r * 1.4, Math.max(0.2, point.r * 0.45));
-    });
-
-    ctx.restore();
   }
 
   async function paintSignatures(root = document) {
@@ -295,25 +408,48 @@
     });
   }
 
-  function signatureItemHtml(name, state, index = 0, mode = "row") {
-    if (!name || !state) return "";
+  function normalizeSigner(signer) {
+    if (typeof signer === "string") {
+      return { signatureText: signer, fullName: signer };
+    }
+    return {
+      signatureText: signer && (signer.signatureText || signer.signName || signer.fullName || signer.name),
+      fullName: signer && (signer.fullName || signer.name || signer.signatureText || signer.signName),
+      showFullName: signer && signer.showFullName
+    };
+  }
+
+  function estimateTextWidth(text, fontSize, factor = 0.48) {
+    return Array.from(String(text || "")).length * Math.max(7, fontSize * factor);
+  }
+
+  function signatureItemHtml(signer, state, index = 0, mode = "row") {
+    const normalized = normalizeSigner(signer);
+    if (!normalized.signatureText || !normalized.fullName || !state) return "";
 
     const id = `sig-${Date.now()}-${signatureCounter++}`;
-    const stagger = [0, 3, -2, 2, -1, 3, -2, 1][index % 8] + (state.lineIndent || 0);
+    const showFullName = normalized.showFullName !== false;
+    const staggerPattern = mode === "cloud" ? [0, 1, -1, 1, -1, 0, 1, -1] : [0, 3, -2, 2, -1, 3, -2, 1];
+    const stagger = staggerPattern[index % staggerPattern.length] + (mode === "cloud" ? (state.lineIndent || 0) * 0.35 : (state.lineIndent || 0));
     const itemStyle = mode === "cloud"
       ? `transform:translate(${stagger}px, ${state.lineShift || 0}px);z-index:${(index % 5) + 1};`
       : "";
-    const estimatedNameWidth = Array.from(name).length * Math.max(7, state.fontSize * 0.44) + 38;
+    const receiverSingleLine = state.role === "receiver" && !showFullName;
+    const estimatedSignWidth = estimateTextWidth(normalized.signatureText, state.fontSize, receiverSingleLine ? 0.58 : 0.5) + (receiverSingleLine ? 24 : 42);
+    const estimatedNameWidth = showFullName ? estimateTextWidth(normalized.fullName, state.fontSize * 0.72, 0.5) + 42 : 0;
+    const estimatedWidth = Math.max(estimatedSignWidth, estimatedNameWidth);
     const boxWidth = state.role === "receiver"
-      ? Math.max(82, Math.min(136, estimatedNameWidth))
-      : Math.max(150, Math.min(270, estimatedNameWidth));
-    const boxHeight = Math.max(48, Math.round(state.fontSize * 2.05));
+      ? Math.max(66, Math.min(156, estimatedWidth))
+      : Math.max(170, Math.min(290, estimatedWidth));
+    const boxHeight = showFullName
+      ? Math.max(62, Math.round(state.fontSize * 2.45 + (state.nameGap || 9)))
+      : Math.max(48, Math.round(state.fontSize * 1.78));
 
-    signatureStore.set(id, { name, state, boxWidth, boxHeight });
+    signatureStore.set(id, { ...normalized, showFullName, state, boxWidth, boxHeight });
 
     return `
       <div class="signature-item" style="${itemStyle}">
-        <canvas class="signature-canvas" data-signature-id="${escapeHtml(id)}" aria-label="${escapeHtml(name)}" style="width:${boxWidth}px;height:${boxHeight}px"></canvas>
+        <canvas class="signature-canvas" data-signature-id="${escapeHtml(id)}" aria-label="${escapeHtml(normalized.fullName)}" style="width:${boxWidth}px;height:${boxHeight}px"></canvas>
       </div>
     `;
   }
@@ -340,6 +476,7 @@
     makeSignatureState,
     paintSignatures,
     renderSignatureGroup,
-    setBaseFontSize
+    setBaseFontSize,
+    getLoadedFonts: () => [...loadedFontMeta]
   };
 })();

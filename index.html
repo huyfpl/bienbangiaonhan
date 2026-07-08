@@ -11,6 +11,8 @@
     @font-face {
       font-family: "SignatureNiceMemory";
       src:
+        url("fonts/14TH Nice Memory.otf") format("opentype"),
+        url("fonts/14TH Nice Memory.ttf") format("truetype"),
         url("font/14TH Nice Memory.otf") format("opentype"),
         url("font/14TH Nice Memory.ttf") format("truetype");
       font-display: swap;
@@ -18,13 +20,17 @@
 
     @font-face {
       font-family: "SignatureHarbour";
-      src: url("font/Fz-Harbour-Light.ttf") format("truetype");
+      src:
+        url("fonts/Fz-Harbour-Light.ttf") format("truetype"),
+        url("font/Fz-Harbour-Light.ttf") format("truetype");
       font-display: swap;
     }
 
     @font-face {
       font-family: "SignatureMotherland";
-      src: url("font/NVN-Motherland-Signature.ttf") format("truetype");
+      src:
+        url("fonts/NVN-Motherland-Signature.ttf") format("truetype"),
+        url("font/NVN-Motherland-Signature.ttf") format("truetype");
       font-display: swap;
     }
 
@@ -114,6 +120,28 @@
       gap: 5px;
     }
 
+    .checkbox-field {
+      align-self: end;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid #cdd9e2;
+      border-radius: 6px;
+      background: #fff;
+      color: #26333d;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .checkbox-field input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--brand);
+    }
+
     .field span {
       color: #26333d;
       font-size: 13px;
@@ -121,6 +149,7 @@
     }
 
     input[type=file],
+    input[type=number],
     select,
     textarea {
       width: 100%;
@@ -140,6 +169,7 @@
     }
 
     input[type=file]:focus,
+    input[type=number]:focus,
     select:focus,
     textarea:focus {
       border-color: var(--teal);
@@ -221,19 +251,62 @@
 
     .preview-shell {
       overflow-x: auto;
-      display: flex;
-      justify-content: center;
+      overflow-y: hidden;
+      display: block;
       padding-bottom: 18px;
       -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      scroll-snap-type: x proximity;
     }
 
     .pages-wrapper {
       display: flex;
-      flex-direction: column;
-      gap: 0;
-      align-items: center;
+      flex-direction: row;
+      gap: 18px;
+      align-items: flex-start;
       min-width: 210mm;
-      transform-origin: top center;
+      width: max-content;
+      transform-origin: top left;
+      padding: 0 2px 10px;
+    }
+
+    .page-frame {
+      flex: 0 0 auto;
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      scroll-snap-align: center;
+    }
+
+    .page-label {
+      color: #3c4953;
+      font: 700 13px/1.2 Arial, Helvetica, sans-serif;
+      user-select: none;
+    }
+
+    .page-nav {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 0 10px;
+      flex-wrap: wrap;
+    }
+
+    .page-nav.is-visible {
+      display: flex;
+    }
+
+    .page-nav button {
+      min-height: 34px;
+      padding: 6px 12px;
+    }
+
+    .page-nav-status {
+      min-width: 112px;
+      text-align: center;
+      color: #26333d;
+      font: 700 13px/1.2 Arial, Helvetica, sans-serif;
     }
 
     .page,
@@ -244,16 +317,12 @@
       margin: 0 auto;
       background-color: var(--paper);
       background-image:
-        repeating-linear-gradient(84deg, transparent 0 22px, rgba(105, 93, 67, 0.024) 22px 23px, transparent 24px 58px),
-        repeating-linear-gradient(174deg, transparent 0 34px, rgba(255, 255, 255, 0.36) 34px 35px, transparent 36px 74px),
-        radial-gradient(ellipse at 24% 18%, rgba(116, 96, 58, 0.04) 0, transparent 34%),
-        radial-gradient(ellipse at 72% 64%, rgba(88, 74, 48, 0.03) 0, transparent 31%),
-        radial-gradient(circle at 18% 14%, rgba(80, 65, 35, 0.035) 0 0.35px, transparent 0.8px),
-        radial-gradient(circle at 74% 31%, rgba(40, 35, 25, 0.026) 0 0.3px, transparent 0.78px),
-        radial-gradient(circle at 38% 72%, rgba(180, 168, 130, 0.045) 0 0.45px, transparent 0.95px),
-        repeating-linear-gradient(98deg, rgba(120, 106, 68, 0.018) 0 0.45px, transparent 0.45px 4.8px),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(253, 249, 238, 0.3));
-      background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 7px 7px, 9px 9px, 11px 11px, 100% 100%, 100% 100%;
+        radial-gradient(ellipse at 18% 12%, rgba(116, 96, 58, 0.035) 0, transparent 32%),
+        radial-gradient(ellipse at 78% 66%, rgba(88, 74, 48, 0.026) 0, transparent 34%),
+        radial-gradient(ellipse at 48% 42%, rgba(255, 255, 255, 0.45) 0, transparent 54%),
+        linear-gradient(93deg, rgba(110, 96, 72, 0.018), transparent 24%, rgba(255, 255, 255, 0.22) 48%, transparent 76%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(253, 249, 238, 0.34));
+      background-size: 100% 100%;
       padding: 12mm;
       box-shadow:
         inset 0 0 0 1px rgba(150, 135, 100, 0.16),
@@ -272,7 +341,10 @@
       .controls { display: none !important; }
       .png-preview-modal { display: none !important; }
       .preview-shell { overflow: visible; padding: 0; }
-      .pages-wrapper { min-width: 0; display: block; transform: none !important; }
+      .pages-wrapper { min-width: 0; width: auto; display: block; transform: none !important; padding: 0; }
+      .page-frame { display: block; }
+      .page-label,
+      .page-nav { display: none !important; }
       .preview-shell { height: auto !important; }
       .page,
       .page-continuation {
@@ -390,7 +462,7 @@
     }
 
     .handover-signature {
-      min-height: 64px;
+      min-height: 78px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -398,7 +470,7 @@
     }
 
     .handover-signature .signature-list {
-      min-height: 60px;
+      min-height: 76px;
       grid-template-columns: minmax(150px, 1fr);
     }
 
@@ -406,7 +478,7 @@
       margin-top: -5px;
       font-size: 13px;
       line-height: 1.12;
-      font-weight: 700;
+      font-weight: 400;
     }
 
     .receiver-confirmation {
@@ -417,7 +489,7 @@
     }
 
     .signature-list {
-      min-height: 52px;
+      min-height: 68px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
       align-items: start;
@@ -431,21 +503,22 @@
 
     .signature-list.receiver-cloud {
       display: flex;
-      width: min(100%, 286px);
-      min-height: 50px;
+      width: 100%;
+      max-width: 282px;
+      min-height: 0;
       margin: 0 auto;
       flex-direction: row;
       flex-wrap: wrap;
-      align-items: center;
+      align-items: flex-start;
       align-content: flex-start;
       justify-content: center;
-      gap: 0 2px;
+      gap: 0;
       padding: 0;
     }
 
     .signature-item {
       width: 100%;
-      min-height: 46px;
+      min-height: 62px;
       position: relative;
       display: flex;
       flex-direction: column;
@@ -456,10 +529,10 @@
 
     .receiver-cloud .signature-item {
       width: auto;
-      min-height: 40px;
+      min-height: 43px;
       align-items: center;
       flex: 0 0 auto;
-      margin: -6px -4px;
+      margin: -3px -8px;
     }
 
     .receiver-cloud .signature-item + .signature-item {
@@ -480,7 +553,7 @@
     }
 
     .signature-empty {
-      min-height: 54px;
+      min-height: 70px;
     }
 
     .tbl-wrap { overflow: hidden; }
@@ -558,16 +631,17 @@
     .png-preview-body {
       flex: 1 1 auto;
       overflow: auto;
-      display: grid;
+      display: flex;
       gap: 12px;
-      justify-items: center;
+      align-items: flex-start;
       padding: 12px;
       background: #e9eef2;
       -webkit-overflow-scrolling: touch;
     }
 
     .png-preview-page {
-      width: min(100%, 794px);
+      width: min(82vw, 794px);
+      min-width: min(82vw, 794px);
       margin: 0 auto;
     }
 
@@ -618,7 +692,7 @@
       }
       .preview-shell {
         margin: 0 -8px;
-        overflow: hidden;
+        overflow-x: auto;
         padding: 0 8px 16px;
       }
       .png-preview-modal {
@@ -684,12 +758,17 @@
 
         <label class="field">
           <span>Cỡ chữ ký</span>
-          <select id="signatureSizeSelect" title="Chọn cỡ chữ ký">
-            <option value="22">Nhỏ 22px</option>
-            <option value="26" selected>Vừa 26px</option>
-            <option value="30">Lớn 30px</option>
-            <option value="34">Rất lớn 34px</option>
-          </select>
+          <input type="number" id="signatureSizeInput" min="1" max="50" step="1" value="26" title="Nhập cỡ chữ ký từ 1 đến 50"/>
+        </label>
+
+        <label class="field">
+          <span>Nền PNG tải lên</span>
+          <input type="file" id="pngBackgroundFile" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" title="Tải ảnh nền khi xuất PNG"/>
+        </label>
+
+        <label class="checkbox-field" title="Dùng ảnh nền đã tải khi xuất PNG">
+          <input type="checkbox" id="pngUseUploadedBackgroundToggle" checked>
+          <span>Bật nền tải lên</span>
         </label>
 
       </div>
@@ -715,6 +794,12 @@
         </div>
         <div class="receiver-status" id="receiverStatus">Chưa nhập người nhận.</div>
       </div>
+    </div>
+
+    <div class="page-nav" id="pageNav">
+      <button type="button" id="btnPrevPage" class="ghost">Previous</button>
+      <span class="page-nav-status" id="pageNavStatus">Trang 1 / 1</span>
+      <button type="button" id="btnNextPage" class="ghost">Next</button>
     </div>
 
     <div class="preview-shell" id="previewShell">
@@ -765,7 +850,9 @@
   const CURRENT_DATE_STR = todayDateString();
   const inventoryFile = document.getElementById("inventoryFile");
   const employeeSelect = document.getElementById("employeeSelect");
-  const signatureSizeSelect = document.getElementById("signatureSizeSelect");
+  const signatureSizeInput = document.getElementById("signatureSizeInput");
+  const pngBackgroundFile = document.getElementById("pngBackgroundFile");
+  const pngUseUploadedBackgroundToggle = document.getElementById("pngUseUploadedBackgroundToggle");
   const btnGenerate = document.getElementById("btnGenerate");
   const btnToggleReceiver = document.getElementById("btnToggleReceiver");
   const btnExportPng = document.getElementById("btnExportPng");
@@ -776,6 +863,10 @@
   const receiverStatus = document.getElementById("receiverStatus");
   const previewShell = document.getElementById("previewShell");
   const pagesWrapper = document.getElementById("pages");
+  const pageNav = document.getElementById("pageNav");
+  const btnPrevPage = document.getElementById("btnPrevPage");
+  const btnNextPage = document.getElementById("btnNextPage");
+  const pageNavStatus = document.getElementById("pageNavStatus");
   const pngPreviewModal = document.getElementById("pngPreviewModal");
   const pngPreviewBody = document.getElementById("pngPreviewBody");
   const pngPreviewNote = document.getElementById("pngPreviewNote");
@@ -794,7 +885,9 @@
   let hasGeneratedDocument = false;
   let pngPreviewFiles = [];
   let blackLogoDataUrl = "";
-  const signatureFontsReady = SignatureAlgorithm.loadFontsFromFolder("font");
+  let currentPageIndex = 0;
+  let uploadedBackgroundDataUrl = "";
+  const signatureFontsReady = SignatureAlgorithm.loadFontsFromFolder("fonts", "font");
 
   function escapeHtml(s) {
     return String(s || "")
@@ -833,8 +926,18 @@
     return (words[words.length - 1] || fullName || "").toLocaleLowerCase("vi");
   }
 
+  function makeSigner(fullName) {
+    return {
+      signatureText: getHandoverSignName(fullName),
+      fullName
+    };
+  }
+
   function selectedSignatureFontSize() {
-    return Number(signatureSizeSelect.value) || 26;
+    if (signatureSizeInput.value === "") return 26;
+    const value = Math.max(1, Math.min(50, Number(signatureSizeInput.value) || 26));
+    if (String(value) !== signatureSizeInput.value) signatureSizeInput.value = value;
+    return value;
   }
 
   function syncSignatureFontSize() {
@@ -871,7 +974,8 @@
   function randomizeReceiverSignatures() {
     syncSignatureFontSize();
     const compact = receiverNames.length > 2;
-    receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState(compact ? "compact" : "normal", "receiver"));
+    const avoidFonts = handoverSignatureState && handoverSignatureState.fontFamily ? [handoverSignatureState.fontFamily] : [];
+    receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState(compact ? "compact" : "normal", "receiver", avoidFonts));
     receiverSignaturesReady = receiverNames.length > 0;
   }
 
@@ -920,14 +1024,7 @@
   function fitPreviewToScreen() {
     pagesWrapper.style.transform = "";
     previewShell.style.height = "";
-
-    const firstPage = pagesWrapper.querySelector(".page, .page-continuation");
-    if (!firstPage || !window.matchMedia("(max-width: 760px)").matches) return;
-
-    const shellWidth = Math.max(280, previewShell.clientWidth - 16);
-    const scale = Math.min(1, shellWidth / firstPage.offsetWidth);
-    pagesWrapper.style.transform = `scale(${scale})`;
-    previewShell.style.height = `${Math.ceil(pagesWrapper.scrollHeight * scale) + 16}px`;
+    updatePageLabels();
   }
 
   function schedulePreviewFit() {
@@ -943,16 +1040,18 @@
   }
 
   function confirmSignHtml(empName) {
-    const handoverSignName = getHandoverSignName(empName);
     const handoverSignature = empName
       ? `
         <div class="handover-signature">
-          ${SignatureAlgorithm.renderSignatureGroup([handoverSignName], [ensureHandoverSignature(empName)], true)}
-         
+          ${SignatureAlgorithm.renderSignatureGroup([makeSigner(empName)], [ensureHandoverSignature(empName)], true)}
         </div>
       `
       : '<div class="signature-empty"></div>';
-    const receiverSignature = SignatureAlgorithm.renderSignatureGroup(receiverNames, receiverSignatureStates, receiverSignaturesReady);
+    const receiverSignature = SignatureAlgorithm.renderSignatureGroup(
+      receiverNames.map((name) => ({ ...makeSigner(name), showFullName: false })),
+      receiverSignatureStates,
+      receiverSignaturesReady
+    );
 
     return `
       <div class="confirm">
@@ -1059,6 +1158,72 @@
     return template.content.firstElementChild;
   }
 
+  function getPageEls() {
+    return Array.from(pagesWrapper.querySelectorAll(".page, .page-continuation"));
+  }
+
+  function appendPage(pageEl) {
+    const frame = document.createElement("div");
+    frame.className = "page-frame";
+    const label = document.createElement("div");
+    label.className = "page-label";
+    frame.appendChild(label);
+    frame.appendChild(pageEl);
+    pagesWrapper.appendChild(frame);
+    updatePageLabels();
+    return pageEl;
+  }
+
+  function removePage(pageEl) {
+    const frame = pageEl.closest(".page-frame");
+    if (frame) frame.remove();
+    else pageEl.remove();
+    updatePageLabels();
+  }
+
+  function updatePageLabels() {
+    const pages = getPageEls();
+    const total = Math.max(1, pages.length);
+    pages.forEach((pageEl, index) => {
+      pageEl.dataset.pageIndex = String(index);
+      const label = pageEl.closest(".page-frame")?.querySelector(".page-label");
+      if (label) label.textContent = `Trang ${index + 1} / ${total}`;
+    });
+    currentPageIndex = Math.max(0, Math.min(currentPageIndex, total - 1));
+    pageNav.classList.toggle("is-visible", total > 1);
+    pageNavStatus.textContent = `Trang ${currentPageIndex + 1} / ${total}`;
+    btnPrevPage.disabled = currentPageIndex <= 0;
+    btnNextPage.disabled = currentPageIndex >= total - 1;
+  }
+
+  function scrollToPage(index) {
+    const pages = getPageEls();
+    if (!pages.length) return;
+    currentPageIndex = Math.max(0, Math.min(index, pages.length - 1));
+    updatePageLabels();
+    const frame = pages[currentPageIndex].closest(".page-frame") || pages[currentPageIndex];
+    frame.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }
+
+  function updateCurrentPageFromScroll() {
+    const pages = getPageEls();
+    if (!pages.length) return;
+    const shellCenter = previewShell.scrollLeft + previewShell.clientWidth / 2;
+    let bestIndex = 0;
+    let bestDistance = Infinity;
+    pages.forEach((pageEl, index) => {
+      const frame = pageEl.closest(".page-frame") || pageEl;
+      const center = frame.offsetLeft + frame.offsetWidth / 2;
+      const distance = Math.abs(center - shellCenter);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    });
+    currentPageIndex = bestIndex;
+    updatePageLabels();
+  }
+
   function buildTableRows(codes, startIndex, maxRows) {
     const rows = [];
     const totalRows = Math.min(maxRows, Math.ceil((codes.length - startIndex) / TABLE_COLS));
@@ -1147,12 +1312,12 @@
     Array.from(pagesWrapper.querySelectorAll(".page-continuation")).forEach((pageEl) => {
       const hasRows = !!pageEl.querySelector(".codes tbody tr");
       const hasSignature = !!pageEl.querySelector(".confirm, .sign-table");
-      if (!hasRows && !hasSignature) pageEl.remove();
+      if (!hasRows && !hasSignature) removePage(pageEl);
     });
   }
 
   function appendSignatureWithPagination(empName) {
-    const pages = Array.from(pagesWrapper.querySelectorAll(".page, .page-continuation"));
+    const pages = getPageEls();
     const lastPage = pages[pages.length - 1];
     if (!lastPage) return;
 
@@ -1162,7 +1327,7 @@
     removeSignatureFromPage(lastPage);
 
     const finalPage = createContinuationPage();
-    pagesWrapper.appendChild(finalPage.page);
+    appendPage(finalPage.page);
 
     const sourceTbody = lastPage.querySelector(".codes tbody");
     const keepRowsOnSource = lastPage.classList.contains("page") ? 1 : 0;
@@ -1189,15 +1354,17 @@
     pagesWrapper.innerHTML = "";
     pagesWrapper.style.transform = "";
     previewShell.style.height = "";
+    currentPageIndex = 0;
 
     const { maBC, tenBC } = getBcInfo();
     const firstPage = htmlToElement(createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC));
     const firstTbody = firstPage.querySelector(".codes tbody");
-    pagesWrapper.appendChild(firstPage);
+    appendPage(firstPage);
 
     if (!codes || !codes.length) {
       appendEmptyRows(firstTbody, 8);
       appendSignatureWithPagination(empName);
+      updatePageLabels();
       schedulePreviewFit();
       return;
     }
@@ -1206,13 +1373,14 @@
 
     while (currentIndex < codes.length) {
       const contPage = createContinuationPage();
-      pagesWrapper.appendChild(contPage.page);
+      appendPage(contPage.page);
 
       const nextIndex = appendMeasuredCodeRows(contPage.page, contPage.tbody, codes, currentIndex);
       currentIndex = nextIndex > currentIndex ? nextIndex : currentIndex + TABLE_COLS;
     }
 
     appendSignatureWithPagination(empName);
+    updatePageLabels();
     schedulePreviewFit();
   }
 
@@ -1220,13 +1388,15 @@
     pagesWrapper.innerHTML = "";
     pagesWrapper.style.transform = "";
     previewShell.style.height = "";
+    currentPageIndex = 0;
 
     const { maBC, tenBC } = getBcInfo();
     const firstPage = htmlToElement(createFirstPageSkeleton("", CURRENT_DATE_STR, maBC, tenBC));
     const tbody = firstPage.querySelector(".codes tbody");
     appendEmptyRows(tbody, 8);
-    pagesWrapper.appendChild(firstPage);
+    appendPage(firstPage);
     appendSignatureWithPagination("");
+    updatePageLabels();
     schedulePreviewFit();
   }
 
@@ -1250,6 +1420,153 @@
 
   function blobToObjectUrl(blob) {
     return URL.createObjectURL(blob);
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  function drawPaperTexture(ctx, x, y, width, height) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, width, height);
+    ctx.clip();
+
+    const grainScale = 0.55;
+    const grainWidth = Math.max(1, Math.round(width * grainScale));
+    const grainHeight = Math.max(1, Math.round(height * grainScale));
+    const grain = ctx.createImageData(grainWidth, grainHeight);
+    for (let i = 0; i < grain.data.length; i += 4) {
+      const warm = 236 + Math.floor(Math.random() * 20);
+      const speck = Math.random() > 0.985 ? -18 : 0;
+      grain.data[i] = Math.max(0, warm + speck);
+      grain.data[i + 1] = Math.max(0, warm - 2 + speck);
+      grain.data[i + 2] = Math.max(0, warm - 8 + speck);
+      grain.data[i + 3] = 10 + Math.floor(Math.random() * 16);
+    }
+    const texture = document.createElement("canvas");
+    texture.width = grainWidth;
+    texture.height = grainHeight;
+    texture.getContext("2d").putImageData(grain, 0, 0);
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(texture, x, y, width, height);
+
+    ctx.globalAlpha = 0.075;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 180; i++) {
+      const sx = x + Math.random() * width;
+      const sy = y + Math.random() * height;
+      const len = width * (0.015 + Math.random() * 0.055);
+      ctx.strokeStyle = i % 3 === 0 ? "rgba(84, 72, 52, 0.34)" : "rgba(255, 255, 255, 0.55)";
+      ctx.lineWidth = 0.35 + Math.random() * 0.75;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.quadraticCurveTo(
+        sx + len * 0.45,
+        sy + (Math.random() - 0.5) * height * 0.008,
+        sx + len,
+        sy + (Math.random() - 0.5) * height * 0.012
+      );
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 0.05;
+    for (let i = 0; i < 8; i++) {
+      const sx = x + width * (0.08 + Math.random() * 0.84);
+      const sy = y + height * (0.06 + Math.random() * 0.88);
+      const len = width * (0.28 + Math.random() * 0.55);
+      ctx.strokeStyle = i % 2 ? "rgba(54, 48, 38, 0.32)" : "rgba(255, 255, 255, 0.55)";
+      ctx.lineWidth = 1.2 + Math.random() * 3.2;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.bezierCurveTo(
+        sx + len * 0.24,
+        sy - height * (0.018 + Math.random() * 0.022),
+        sx + len * 0.64,
+        sy + height * (0.012 + Math.random() * 0.028),
+        sx + len,
+        sy + (Math.random() - 0.5) * height * 0.035
+      );
+      ctx.stroke();
+    }
+
+    const edge = ctx.createRadialGradient(
+      x + width * 0.5,
+      y + height * 0.45,
+      width * 0.12,
+      x + width * 0.5,
+      y + height * 0.5,
+      width * 0.7
+    );
+    edge.addColorStop(0, "rgba(255, 255, 255, 0.16)");
+    edge.addColorStop(0.72, "rgba(255, 255, 255, 0)");
+    edge.addColorStop(1, "rgba(68, 54, 35, 0.12)");
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = edge;
+    ctx.fillRect(x, y, width, height);
+
+    ctx.restore();
+  }
+
+  async function drawUploadedBackground(ctx, width, height) {
+    if (!uploadedBackgroundDataUrl) return false;
+    try {
+      const img = await loadImage(uploadedBackgroundDataUrl);
+      const scale = Math.max(width / img.naturalWidth, height / img.naturalHeight);
+      const drawWidth = img.naturalWidth * scale;
+      const drawHeight = img.naturalHeight * scale;
+      ctx.drawImage(img, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+      return true;
+    } catch (err) {
+      console.warn("Không dùng được ảnh nền tải lên:", err);
+      return false;
+    }
+  }
+
+  async function composePageOnBackground(pageCanvas, pageIndex) {
+    const shouldUseUploadedBackground = pngUseUploadedBackgroundToggle.checked && !!uploadedBackgroundDataUrl;
+    const marginX = shouldUseUploadedBackground ? Math.round(pageCanvas.width * 0.16) : 0;
+    const marginY = shouldUseUploadedBackground ? Math.round(pageCanvas.height * 0.08) : 0;
+    const canvas = document.createElement("canvas");
+    canvas.width = pageCanvas.width + marginX * 2;
+    canvas.height = pageCanvas.height + marginY * 2;
+    const ctx = canvas.getContext("2d");
+
+    const usedUpload = shouldUseUploadedBackground && await drawUploadedBackground(ctx, canvas.width, canvas.height);
+    if (!usedUpload) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(pageCanvas, 0, 0);
+      drawPaperTexture(ctx, 0, 0, pageCanvas.width, pageCanvas.height);
+      return canvas;
+    }
+
+    const angleDirection = pageIndex % 2 ? 1 : -1;
+    const angle = angleDirection * (0.7 + Math.random() * 1.1) * Math.PI / 180;
+    const offsetX = Math.round((Math.random() - 0.5) * marginX * 0.16);
+    const offsetY = Math.round((Math.random() - 0.5) * marginY * 0.16);
+    const centerX = canvas.width / 2 + offsetX;
+    const centerY = canvas.height / 2 + offsetY;
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(angle);
+    ctx.shadowColor = "rgba(20, 24, 28, 0.28)";
+    ctx.shadowBlur = Math.round(pageCanvas.width * 0.028);
+    ctx.shadowOffsetX = Math.round(pageCanvas.width * 0.012);
+    ctx.shadowOffsetY = Math.round(pageCanvas.width * 0.02);
+    ctx.fillStyle = "#f7f4ea";
+    ctx.fillRect(-pageCanvas.width / 2, -pageCanvas.height / 2, pageCanvas.width, pageCanvas.height);
+    ctx.shadowColor = "transparent";
+    ctx.drawImage(pageCanvas, -pageCanvas.width / 2, -pageCanvas.height / 2);
+    drawPaperTexture(ctx, Math.round(-pageCanvas.width / 2), Math.round(-pageCanvas.height / 2), pageCanvas.width, pageCanvas.height);
+    ctx.restore();
+
+    return canvas;
   }
 
   async function makeBlackLogoDataUrl() {
@@ -1386,7 +1703,7 @@
       return;
     }
 
-    const pageEls = Array.from(pagesWrapper.querySelectorAll(".page, .page-continuation"));
+    const pageEls = getPageEls();
     if (!pageEls.length) return alert("Chưa có trang biên bản để xuất.");
     if (!window.html2canvas) return alert("Chưa tải được thư viện xuất PNG. Hãy kiểm tra kết nối mạng.");
 
@@ -1424,11 +1741,12 @@
         previewShell.style.height = "";
         const canvas = await html2canvas(pageEls[i], {
           backgroundColor: null,
-          scale: 2,
+          scale: 4,
           useCORS: true,
           logging: false
         });
-        const blob = await canvasToPngBlob(canvas);
+        const composedCanvas = await composePageOnBackground(canvas, i);
+        const blob = await canvasToPngBlob(composedCanvas);
         files.push({
           name: pngFileName(i, pageEls.length),
           url: blobToObjectUrl(blob),
@@ -1521,11 +1839,11 @@
     if (!empName) return alert("Hãy chọn nhân viên bàn giao.");
 
     await signatureFontsReady;
-    readReceiverNamesForGenerate();
     activeEmpName = empName;
     activeCodes = empMap[empName] || [];
     hasGeneratedDocument = true;
     ensureHandoverSignature(empName, true);
+    readReceiverNamesForGenerate();
     paginateRows(activeEmpName, activeCodes);
   });
 
@@ -1544,6 +1862,32 @@
   btnCopyPreviewPng.addEventListener("click", copyPreviewPngFiles);
   btnDownloadPreviewPng.addEventListener("click", downloadPreviewPngFiles);
   btnClosePngPreview.addEventListener("click", closePngPreview);
+  btnPrevPage.addEventListener("click", () => scrollToPage(currentPageIndex - 1));
+  btnNextPage.addEventListener("click", () => scrollToPage(currentPageIndex + 1));
+  previewShell.addEventListener("scroll", () => {
+    window.clearTimeout(previewShell._pageScrollTimer);
+    previewShell._pageScrollTimer = window.setTimeout(updateCurrentPageFromScroll, 80);
+  });
+  pngUseUploadedBackgroundToggle.addEventListener("change", clearPngPreview);
+  pngBackgroundFile.addEventListener("change", () => {
+    const file = pngBackgroundFile.files && pngBackgroundFile.files[0];
+    if (!file) {
+      uploadedBackgroundDataUrl = "";
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      pngBackgroundFile.value = "";
+      uploadedBackgroundDataUrl = "";
+      alert("Chỉ hỗ trợ ảnh nền JPG, PNG hoặc WEBP.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      uploadedBackgroundDataUrl = String(event.target.result || "");
+      clearPngPreview();
+    };
+    reader.readAsDataURL(file);
+  });
   pngPreviewModal.addEventListener("click", (event) => {
     if (event.target === pngPreviewModal) closePngPreview();
   });
@@ -1553,7 +1897,8 @@
     }
   });
   bcSelect.addEventListener("change", rerenderCurrentDocument);
-  signatureSizeSelect.addEventListener("change", refreshSignatureSizing);
+  signatureSizeInput.addEventListener("change", refreshSignatureSizing);
+  signatureSizeInput.addEventListener("input", refreshSignatureSizing);
   window.addEventListener("resize", fitPreviewToScreen);
   btnPrint.addEventListener("click", printCurrentDocument);
 </script>
