@@ -276,6 +276,9 @@
       gap: 8px;
       justify-items: center;
       scroll-snap-align: center;
+      contain: layout paint style;
+      content-visibility: auto;
+      contain-intrinsic-size: 812px 1148px;
     }
 
     .page-label {
@@ -317,6 +320,11 @@
       margin: 0 auto;
       background-color: var(--paper);
       background-image:
+        linear-gradient(104deg, transparent 0 18%, rgba(118, 99, 67, 0.032) 18.35%, rgba(255, 255, 255, 0.16) 19.05%, transparent 20.2%),
+        linear-gradient(78deg, transparent 0 48%, rgba(78, 64, 43, 0.036) 48.25%, rgba(255, 255, 255, 0.2) 49.1%, transparent 50.2%),
+        linear-gradient(164deg, transparent 0 70%, rgba(95, 78, 54, 0.026) 70.2%, rgba(255, 255, 255, 0.18) 71.05%, transparent 72%),
+        repeating-linear-gradient(92deg, rgba(92, 76, 52, 0.012) 0 1px, transparent 1px 11px),
+        repeating-linear-gradient(2deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 15px),
         radial-gradient(ellipse at 18% 12%, rgba(116, 96, 58, 0.035) 0, transparent 32%),
         radial-gradient(ellipse at 78% 66%, rgba(88, 74, 48, 0.026) 0, transparent 34%),
         radial-gradient(ellipse at 48% 42%, rgba(255, 255, 255, 0.45) 0, transparent 54%),
@@ -331,6 +339,12 @@
       page-break-after: always;
       font-family: "Times New Roman", Times, serif;
       overflow: hidden;
+      contain: layout paint;
+    }
+
+    .pages-wrapper.is-paginating .page-frame,
+    .pages-wrapper.is-exporting-png .page-frame {
+      content-visibility: visible;
     }
 
     @page { size: A4 portrait; margin: 0; }
@@ -343,6 +357,7 @@
       .preview-shell { overflow: visible; padding: 0; }
       .pages-wrapper { min-width: 0; width: auto; display: block; transform: none !important; padding: 0; }
       .page-frame { display: block; }
+      .page-frame { content-visibility: visible; contain: none; }
       .page-label,
       .page-nav { display: none !important; }
       .preview-shell { height: auto !important; }
@@ -355,6 +370,7 @@
         height: 297mm;
         min-height: 297mm;
         overflow: hidden;
+        contain: none;
       }
       .codes { page-break-inside: auto; }
       .page:empty,
@@ -504,7 +520,7 @@
     .signature-list.receiver-cloud {
       display: flex;
       width: 100%;
-      max-width: 282px;
+      max-width: 330px;
       min-height: 0;
       margin: 0 auto;
       flex-direction: row;
@@ -529,10 +545,10 @@
 
     .receiver-cloud .signature-item {
       width: auto;
-      min-height: 43px;
+      min-height: 46px;
       align-items: center;
       flex: 0 0 auto;
-      margin: -3px -8px;
+      margin: -3px -4px;
     }
 
     .receiver-cloud .signature-item + .signature-item {
@@ -643,6 +659,8 @@
       width: min(82vw, 794px);
       min-width: min(82vw, 794px);
       margin: 0 auto;
+      content-visibility: auto;
+      contain-intrinsic-size: 794px 1123px;
     }
 
     .png-preview-page img {
@@ -887,6 +905,8 @@
   let blackLogoDataUrl = "";
   let currentPageIndex = 0;
   let uploadedBackgroundDataUrl = "";
+  let pageMetrics = [];
+  let previewScrollRaf = 0;
   const signatureFontsReady = SignatureAlgorithm.loadFontsFromFolder("fonts", "font");
 
   function escapeHtml(s) {
@@ -926,10 +946,22 @@
     return (words[words.length - 1] || fullName || "").toLocaleLowerCase("vi");
   }
 
+  function getReceiverSignName(fullName) {
+    return String(fullName || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
+  }
+
   function makeSigner(fullName) {
     return {
       signatureText: getHandoverSignName(fullName),
       fullName
+    };
+  }
+
+  function makeReceiverSigner(fullName) {
+    return {
+      signatureText: getReceiverSignName(fullName),
+      fullName,
+      showFullName: false
     };
   }
 
@@ -1048,7 +1080,7 @@
       `
       : '<div class="signature-empty"></div>';
     const receiverSignature = SignatureAlgorithm.renderSignatureGroup(
-      receiverNames.map((name) => ({ ...makeSigner(name), showFullName: false })),
+      receiverNames.map(makeReceiverSigner),
       receiverSignatureStates,
       receiverSignaturesReady
     );
@@ -1162,7 +1194,7 @@
     return Array.from(pagesWrapper.querySelectorAll(".page, .page-continuation"));
   }
 
-  function appendPage(pageEl) {
+  function appendPage(pageEl, shouldUpdateLabels = true) {
     const frame = document.createElement("div");
     frame.className = "page-frame";
     const label = document.createElement("div");
@@ -1170,15 +1202,25 @@
     frame.appendChild(label);
     frame.appendChild(pageEl);
     pagesWrapper.appendChild(frame);
-    updatePageLabels();
+    if (shouldUpdateLabels) updatePageLabels();
     return pageEl;
   }
 
-  function removePage(pageEl) {
+  function removePage(pageEl, shouldUpdateLabels = true) {
     const frame = pageEl.closest(".page-frame");
     if (frame) frame.remove();
     else pageEl.remove();
-    updatePageLabels();
+    if (shouldUpdateLabels) updatePageLabels();
+  }
+
+  function refreshPageMetrics(pages = getPageEls()) {
+    pageMetrics = pages.map((pageEl, index) => {
+      const frame = pageEl.closest(".page-frame") || pageEl;
+      return {
+        index,
+        center: frame.offsetLeft + frame.offsetWidth / 2
+      };
+    });
   }
 
   function updatePageLabels() {
@@ -1194,6 +1236,7 @@
     pageNavStatus.textContent = `Trang ${currentPageIndex + 1} / ${total}`;
     btnPrevPage.disabled = currentPageIndex <= 0;
     btnNextPage.disabled = currentPageIndex >= total - 1;
+    refreshPageMetrics(pages);
   }
 
   function scrollToPage(index) {
@@ -1208,16 +1251,15 @@
   function updateCurrentPageFromScroll() {
     const pages = getPageEls();
     if (!pages.length) return;
+    if (pageMetrics.length !== pages.length) refreshPageMetrics(pages);
     const shellCenter = previewShell.scrollLeft + previewShell.clientWidth / 2;
     let bestIndex = 0;
     let bestDistance = Infinity;
-    pages.forEach((pageEl, index) => {
-      const frame = pageEl.closest(".page-frame") || pageEl;
-      const center = frame.offsetLeft + frame.offsetWidth / 2;
-      const distance = Math.abs(center - shellCenter);
+    pageMetrics.forEach((metric) => {
+      const distance = Math.abs(metric.center - shellCenter);
       if (distance < bestDistance) {
         bestDistance = distance;
-        bestIndex = index;
+        bestIndex = metric.index;
       }
     });
     currentPageIndex = bestIndex;
@@ -1308,15 +1350,15 @@
     if (tblWrap) tblWrap.insertAdjacentHTML("afterend", confirmSignHtml(empName));
   }
 
-  function removeEmptyContinuationPages() {
+  function removeEmptyContinuationPages(shouldUpdateLabels = true) {
     Array.from(pagesWrapper.querySelectorAll(".page-continuation")).forEach((pageEl) => {
       const hasRows = !!pageEl.querySelector(".codes tbody tr");
       const hasSignature = !!pageEl.querySelector(".confirm, .sign-table");
-      if (!hasRows && !hasSignature) removePage(pageEl);
+      if (!hasRows && !hasSignature) removePage(pageEl, shouldUpdateLabels);
     });
   }
 
-  function appendSignatureWithPagination(empName) {
+  function appendSignatureWithPagination(empName, shouldUpdateLabels = true) {
     const pages = getPageEls();
     const lastPage = pages[pages.length - 1];
     if (!lastPage) return;
@@ -1327,30 +1369,13 @@
     removeSignatureFromPage(lastPage);
 
     const finalPage = createContinuationPage();
-    appendPage(finalPage.page);
-
-    const sourceTbody = lastPage.querySelector(".codes tbody");
-    const keepRowsOnSource = lastPage.classList.contains("page") ? 1 : 0;
-
-    while (sourceTbody && sourceTbody.rows.length > keepRowsOnSource) {
-      const row = sourceTbody.rows[sourceTbody.rows.length - 1];
-      finalPage.tbody.insertBefore(row, finalPage.tbody.firstChild);
-
-      appendSignatureToPage(finalPage.page, empName);
-      const overflows = isPageOverflowing(finalPage.page);
-      removeSignatureFromPage(finalPage.page);
-
-      if (overflows) {
-        sourceTbody.appendChild(finalPage.tbody.firstElementChild);
-        break;
-      }
-    }
-
+    appendPage(finalPage.page, shouldUpdateLabels);
     appendSignatureToPage(finalPage.page, empName);
-    removeEmptyContinuationPages();
+    removeEmptyContinuationPages(shouldUpdateLabels);
   }
 
   function paginateRows(empName, codes) {
+    pagesWrapper.classList.add("is-paginating");
     pagesWrapper.innerHTML = "";
     pagesWrapper.style.transform = "";
     previewShell.style.height = "";
@@ -1359,11 +1384,12 @@
     const { maBC, tenBC } = getBcInfo();
     const firstPage = htmlToElement(createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC));
     const firstTbody = firstPage.querySelector(".codes tbody");
-    appendPage(firstPage);
+    appendPage(firstPage, false);
 
     if (!codes || !codes.length) {
       appendEmptyRows(firstTbody, 8);
-      appendSignatureWithPagination(empName);
+      appendSignatureWithPagination(empName, false);
+      pagesWrapper.classList.remove("is-paginating");
       updatePageLabels();
       schedulePreviewFit();
       return;
@@ -1373,18 +1399,20 @@
 
     while (currentIndex < codes.length) {
       const contPage = createContinuationPage();
-      appendPage(contPage.page);
+      appendPage(contPage.page, false);
 
       const nextIndex = appendMeasuredCodeRows(contPage.page, contPage.tbody, codes, currentIndex);
       currentIndex = nextIndex > currentIndex ? nextIndex : currentIndex + TABLE_COLS;
     }
 
-    appendSignatureWithPagination(empName);
+    appendSignatureWithPagination(empName, false);
+    pagesWrapper.classList.remove("is-paginating");
     updatePageLabels();
     schedulePreviewFit();
   }
 
   function showInitialTemplate() {
+    pagesWrapper.classList.add("is-paginating");
     pagesWrapper.innerHTML = "";
     pagesWrapper.style.transform = "";
     previewShell.style.height = "";
@@ -1394,8 +1422,9 @@
     const firstPage = htmlToElement(createFirstPageSkeleton("", CURRENT_DATE_STR, maBC, tenBC));
     const tbody = firstPage.querySelector(".codes tbody");
     appendEmptyRows(tbody, 8);
-    appendPage(firstPage);
-    appendSignatureWithPagination("");
+    appendPage(firstPage, false);
+    appendSignatureWithPagination("", false);
+    pagesWrapper.classList.remove("is-paginating");
     updatePageLabels();
     schedulePreviewFit();
   }
@@ -1494,6 +1523,49 @@
       );
       ctx.stroke();
     }
+
+    const wrinkleLines = [
+      [0.06, 0.19, 0.92, 0.12, -0.018, 1.9, 0.055],
+      [0.13, 0.38, 0.88, 0.45, 0.016, 1.35, 0.045],
+      [0.08, 0.73, 0.86, 0.68, -0.014, 1.5, 0.05],
+      [0.33, 0.05, 0.26, 0.94, 0.012, 1.15, 0.036],
+      [0.69, 0.08, 0.78, 0.9, -0.01, 1.05, 0.032]
+    ];
+
+    wrinkleLines.forEach(([sx, sy, ex, ey, bend, lineWidth, alpha], index) => {
+      const x1 = x + width * sx;
+      const y1 = y + height * sy;
+      const x2 = x + width * ex;
+      const y2 = y + height * ey;
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const length = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / length;
+      const ny = dx / length;
+      const cx = (x1 + x2) / 2 + nx * width * bend;
+      const cy = (y1 + y2) / 2 + ny * height * bend;
+      const jitter = index % 2 ? -1 : 1;
+
+      ctx.globalCompositeOperation = "multiply";
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = `rgba(62, 50, 32, ${alpha})`;
+      ctx.lineWidth = lineWidth + Math.random() * 0.65;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x1 + nx * 1.2 * jitter, y1 + ny * 1.2 * jitter);
+      ctx.quadraticCurveTo(cx + nx * 1.8 * jitter, cy + ny * 1.8 * jitter, x2 + nx * 1.2 * jitter, y2 + ny * 1.2 * jitter);
+      ctx.stroke();
+
+      ctx.globalCompositeOperation = "screen";
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 1.9})`;
+      ctx.lineWidth = Math.max(0.7, lineWidth * 0.6);
+      ctx.beginPath();
+      ctx.moveTo(x1 - nx * 1.6 * jitter, y1 - ny * 1.6 * jitter);
+      ctx.quadraticCurveTo(cx - nx * 2.4 * jitter, cy - ny * 2.4 * jitter, x2 - nx * 1.6 * jitter, y2 - ny * 1.6 * jitter);
+      ctx.stroke();
+    });
+
+    ctx.globalCompositeOperation = "source-over";
 
     const edge = ctx.createRadialGradient(
       x + width * 0.5,
@@ -1641,7 +1713,7 @@
     pngPreviewFiles = files;
     pngPreviewBody.innerHTML = files.map((file, index) => `
       <div class="png-preview-page">
-        <img src="${file.url}" alt="Trang PNG ${index + 1}">
+        <img src="${file.url}" alt="Trang PNG ${index + 1}" loading="lazy" decoding="async">
       </div>
     `).join("");
     pngPreviewNote.textContent = `Đã tạo ${files.length} trang PNG. Có thể Copy PNG hoặc Tải PNG.`;
@@ -1865,9 +1937,12 @@
   btnPrevPage.addEventListener("click", () => scrollToPage(currentPageIndex - 1));
   btnNextPage.addEventListener("click", () => scrollToPage(currentPageIndex + 1));
   previewShell.addEventListener("scroll", () => {
-    window.clearTimeout(previewShell._pageScrollTimer);
-    previewShell._pageScrollTimer = window.setTimeout(updateCurrentPageFromScroll, 80);
-  });
+    if (previewScrollRaf) return;
+    previewScrollRaf = requestAnimationFrame(() => {
+      previewScrollRaf = 0;
+      updateCurrentPageFromScroll();
+    });
+  }, { passive: true });
   pngUseUploadedBackgroundToggle.addEventListener("change", clearPngPreview);
   pngBackgroundFile.addEventListener("change", () => {
     const file = pngBackgroundFile.files && pngBackgroundFile.files[0];

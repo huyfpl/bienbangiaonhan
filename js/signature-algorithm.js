@@ -435,15 +435,15 @@
       ? `transform:translate(${stagger}px, ${state.lineShift || 0}px);z-index:${(index % 5) + 1};`
       : "";
     const receiverSingleLine = state.role === "receiver" && !showFullName;
-    const estimatedSignWidth = estimateTextWidth(normalized.signatureText, state.fontSize, receiverSingleLine ? 0.58 : 0.5) + (receiverSingleLine ? 24 : 42);
+    const estimatedSignWidth = estimateTextWidth(normalized.signatureText, state.fontSize, receiverSingleLine ? 0.54 : 0.5) + (receiverSingleLine ? 34 : 42);
     const estimatedNameWidth = showFullName ? estimateTextWidth(normalized.fullName, state.fontSize * 0.72, 0.5) + 42 : 0;
     const estimatedWidth = Math.max(estimatedSignWidth, estimatedNameWidth);
     const boxWidth = state.role === "receiver"
-      ? Math.max(66, Math.min(156, estimatedWidth))
+      ? Math.max(96, Math.min(238, estimatedWidth))
       : Math.max(170, Math.min(290, estimatedWidth));
     const boxHeight = showFullName
       ? Math.max(62, Math.round(state.fontSize * 2.45 + (state.nameGap || 9)))
-      : Math.max(48, Math.round(state.fontSize * 1.78));
+      : Math.max(50, Math.round(state.fontSize * 1.86));
 
     signatureStore.set(id, { ...normalized, showFullName, state, boxWidth, boxHeight });
 
