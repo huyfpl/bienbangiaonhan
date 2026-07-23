@@ -1,7 +1,7 @@
 (function () {
   let signatureCounter = 0;
   const signatureStore = new Map();
-  const DEFAULT_SIGNATURE_FONT_SIZE = 26;
+  const DEFAULT_SIGNATURE_FONT_SIZE = 25;
   const SIGNATURE_INK_COLORS = ["#34383d", "#3c444b", "#293a45", "#46494d", "#2f3940"];
   const defaultFontFamilies = ["SignatureMotherland", "SignatureNiceMemory", "SignatureHarbour"];
   let signatureFontFamilies = [...defaultFontFamilies];
@@ -305,8 +305,8 @@
     ctx.fillStyle = gradient;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = Math.max(0.28, fontSize / 72) * lineWidthBoost;
-    ctx.strokeStyle = rgba(dark, 0.2);
+    ctx.lineWidth = Math.max(0.3, fontSize / 68) * lineWidthBoost;
+    ctx.strokeStyle = rgba(dark, 0.24);
     strokeTextWithSpacing(ctx, text, 0, 0, letterSpacing);
     drawTextWithSpacing(ctx, text, 0, 0, letterSpacing);
 

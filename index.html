@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="js/signature-algorithm.js"></script>
+  <script src="js/banner.js" defer></script>
   <style>
     @font-face {
       font-family: "SignatureNiceMemory";
@@ -71,6 +72,50 @@
       box-shadow: 0 8px 24px rgba(18, 35, 48, 0.08);
     }
 
+    .site-banner {
+      display: none;
+      margin-bottom: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 0, 55, 0.24);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(18, 35, 48, 0.08);
+    }
+
+    .site-banner.is-visible {
+      display: block;
+    }
+
+    .site-banner-track {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .site-banner-text {
+      display: inline-block;
+      padding: 9px 18px;
+      color: var(--brand);
+      font: 800 15px/1.25 Arial, Helvetica, sans-serif;
+      letter-spacing: 0;
+      will-change: transform, opacity;
+      animation:
+        banner-marquee var(--banner-duration, 14s) linear infinite,
+        banner-blink var(--banner-blink-duration, 0.9s) ease-in-out infinite;
+    }
+
+    @keyframes banner-marquee {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(100vw); }
+    }
+
+    @keyframes banner-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.34; }
+    }
+
     .controls-head {
       display: flex;
       align-items: center;
@@ -88,10 +133,13 @@
     }
 
     .control-title {
+      font-family: Arial, "Segoe UI", Helvetica, sans-serif;
+      font-style: normal;
       font-weight: 800;
       color: var(--brand);
       font-size: 18px;
       line-height: 1.25;
+      letter-spacing: 0;
       width: 100%;
       text-align: center;
     }
@@ -113,11 +161,17 @@
       grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(145px, 1fr));
       gap: 10px;
       align-items: end;
+      overflow: visible;
     }
 
     .field {
       display: grid;
       gap: 5px;
+    }
+
+    .employee-field {
+      position: relative;
+      z-index: 12;
     }
 
     .checkbox-field {
@@ -166,6 +220,131 @@
     textarea {
       min-height: 74px;
       resize: vertical;
+    }
+
+    .employee-multi-picker {
+      position: relative;
+    }
+
+    .employee-picker-toggle {
+      width: 100%;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 34px 8px 10px;
+      border: 1px solid #cdd9e2;
+      border-radius: 6px;
+      background: #fff;
+      color: #101820;
+      text-align: left;
+      font: 15px/1.35 Arial, Helvetica, sans-serif;
+      position: relative;
+    }
+
+    .employee-picker-toggle:hover {
+      background: #fff;
+      border-color: #aebdc8;
+    }
+
+    .employee-picker-toggle:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(15, 89, 103, 0.14);
+      outline: none;
+    }
+
+    .employee-picker-toggle::after {
+      content: "";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid #53616c;
+      border-bottom: 2px solid #53616c;
+      transform: translateY(-65%) rotate(45deg);
+    }
+
+    .employee-picker-summary {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .employee-picker-menu {
+      position: absolute;
+      z-index: 30;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      border: 1px solid #cdd9e2;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 16px 36px rgba(18, 35, 48, 0.18);
+    }
+
+    .employee-picker-tools {
+      display: flex;
+      gap: 6px;
+      padding: 8px;
+      border-bottom: 1px solid #edf2f5;
+      background: #f7fafb;
+    }
+
+    .employee-picker-tool {
+      min-height: 30px;
+      padding: 5px 9px;
+      border-color: #cdd9e2;
+      background: #fff;
+      color: #26333d;
+      font-size: 12px;
+    }
+
+    .employee-picker-tool:hover {
+      border-color: var(--teal);
+      background: #eef6f7;
+      color: #102b31;
+    }
+
+    .employee-picker-list {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 5px;
+    }
+
+    .employee-picker-option {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: #17232c;
+      font-size: 14px;
+      line-height: 1.25;
+      cursor: pointer;
+    }
+
+    .employee-picker-option:hover {
+      background: #f0f6f7;
+    }
+
+    .employee-picker-option input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--brand);
+      flex: 0 0 auto;
+    }
+
+    .employee-picker-empty {
+      padding: 14px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
     }
 
     input[type=file]:focus,
@@ -266,6 +445,7 @@
       align-items: flex-start;
       min-width: 210mm;
       width: max-content;
+      margin: 0 auto;
       transform-origin: top left;
       padding: 0 2px 10px;
     }
@@ -353,6 +533,7 @@
       body { margin: 0; padding: 0; background: #fff; zoom: 90%; }
       .container { margin: 0; padding: 0; max-width: none; }
       .controls { display: none !important; }
+      .site-banner { display: none !important; }
       .png-preview-modal { display: none !important; }
       .preview-shell { overflow: visible; padding: 0; }
       .pages-wrapper { min-width: 0; width: auto; display: block; transform: none !important; padding: 0; }
@@ -745,6 +926,12 @@
 </head>
 <body>
   <div class="container">
+    <div class="site-banner" id="siteBanner" aria-live="polite" aria-label="Thông báo">
+      <div class="site-banner-track">
+        <span class="site-banner-text" id="siteBannerText"></span>
+      </div>
+    </div>
+
     <div class="controls" role="region" aria-label="Điều khiển tạo biên bản">
       <div class="controls-head">
         <div>
@@ -760,11 +947,28 @@
           <input type="file" id="inventoryFile" accept=".xlsx,.xls" title="Upload file kiểm kho (.xlsx)"/>
         </label>
 
-        <label class="field">
+        <div class="field employee-field">
           <span>Người bàn giao</span>
           <select id="employeeSelect" title="Chọn nhân viên">
             <option value="">-- Chọn nhân viên --</option>
           </select>
+          <div class="employee-multi-picker" id="employeeMultiPicker" hidden>
+            <button type="button" class="employee-picker-toggle" id="employeeMultiToggleButton" aria-expanded="false" aria-controls="employeeMultiMenu">
+              <span class="employee-picker-summary" id="employeeMultiSummary">Chọn nhân viên</span>
+            </button>
+            <div class="employee-picker-menu" id="employeeMultiMenu" hidden>
+              <div class="employee-picker-tools">
+                <button type="button" class="employee-picker-tool" id="btnSelectAllEmployees">Tất cả</button>
+                <button type="button" class="employee-picker-tool" id="btnClearEmployees">Bỏ chọn</button>
+              </div>
+              <div class="employee-picker-list" id="employeeMultiList"></div>
+            </div>
+          </div>
+        </div>
+
+        <label class="checkbox-field" title="Bật để chọn nhiều người bàn giao rồi tạo, xuất ảnh hoặc in cùng một lượt">
+          <input type="checkbox" id="multiEmployeeToggle">
+          <span>Chọn nhiều nhân viên</span>
         </label>
 
         <label class="field">
@@ -776,15 +980,15 @@
 
         <label class="field">
           <span>Cỡ chữ ký</span>
-          <input type="number" id="signatureSizeInput" min="1" max="50" step="1" value="26" title="Nhập cỡ chữ ký từ 1 đến 50"/>
+          <input type="number" id="signatureSizeInput" min="1" max="50" step="1" value="25" title="Nhập cỡ chữ ký từ 1 đến 50"/>
         </label>
 
         <label class="field">
-          <span>Nền PNG tải lên</span>
-          <input type="file" id="pngBackgroundFile" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" title="Tải ảnh nền khi xuất PNG"/>
+          <span>Nền ảnh tải lên</span>
+          <input type="file" id="pngBackgroundFile" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" title="Tải ảnh nền khi xuất ảnh"/>
         </label>
 
-        <label class="checkbox-field" title="Dùng ảnh nền đã tải khi xuất PNG">
+        <label class="checkbox-field" title="Dùng ảnh nền đã tải khi xuất ảnh">
           <input type="checkbox" id="pngUseUploadedBackgroundToggle" checked>
           <span>Bật nền tải lên</span>
         </label>
@@ -797,7 +1001,7 @@
 
       <div class="actions">
         <button type="button" id="btnToggleReceiver" class="secondary">Nhập người nhận</button>
-        <button type="button" id="btnExportPng" class="ghost">Xuất PNG</button>
+        <button type="button" id="btnExportPng" class="ghost">Xuất ảnh</button>
         <button type="button" id="btnPrint">In A4</button>
       </div>
 
@@ -829,12 +1033,12 @@
     <div class="png-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="pngPreviewTitle">
       <div class="png-preview-head">
         <div>
-          <div class="png-preview-title" id="pngPreviewTitle">Xem trước PNG</div>
+          <div class="png-preview-title" id="pngPreviewTitle">Xem trước ảnh</div>
           <div class="png-preview-note" id="pngPreviewNote">Kiểm tra ảnh trước khi tải xuống.</div>
         </div>
         <div class="png-preview-actions">
-          <button type="button" id="btnCopyPreviewPng" class="secondary">Copy PNG</button>
-          <button type="button" id="btnDownloadPreviewPng">Tải PNG</button>
+          <button type="button" id="btnCopyPreviewPng" class="secondary">Copy ảnh</button>
+          <button type="button" id="btnDownloadPreviewPng">Tải JPG</button>
           <button type="button" id="btnClosePngPreview" class="ghost">Đóng</button>
         </div>
       </div>
@@ -868,6 +1072,14 @@
   const CURRENT_DATE_STR = todayDateString();
   const inventoryFile = document.getElementById("inventoryFile");
   const employeeSelect = document.getElementById("employeeSelect");
+  const multiEmployeeToggle = document.getElementById("multiEmployeeToggle");
+  const employeeMultiPicker = document.getElementById("employeeMultiPicker");
+  const employeeMultiToggleButton = document.getElementById("employeeMultiToggleButton");
+  const employeeMultiMenu = document.getElementById("employeeMultiMenu");
+  const employeeMultiSummary = document.getElementById("employeeMultiSummary");
+  const employeeMultiList = document.getElementById("employeeMultiList");
+  const btnSelectAllEmployees = document.getElementById("btnSelectAllEmployees");
+  const btnClearEmployees = document.getElementById("btnClearEmployees");
   const signatureSizeInput = document.getElementById("signatureSizeInput");
   const pngBackgroundFile = document.getElementById("pngBackgroundFile");
   const pngUseUploadedBackgroundToggle = document.getElementById("pngUseUploadedBackgroundToggle");
@@ -879,6 +1091,7 @@
   const receiverNamesInput = document.getElementById("receiverNamesInput");
   const btnSaveReceiver = document.getElementById("btnSaveReceiver");
   const receiverStatus = document.getElementById("receiverStatus");
+  const receiverFieldNote = receiverPanel.querySelector(".field-note");
   const previewShell = document.getElementById("previewShell");
   const pagesWrapper = document.getElementById("pages");
   const pageNav = document.getElementById("pageNav");
@@ -907,6 +1120,11 @@
   let uploadedBackgroundDataUrl = "";
   let pageMetrics = [];
   let previewScrollRaf = 0;
+  const singleReceiverPlaceholder = "Ví dụ: Nguyễn Văn A, Trần Thị B";
+  const batchReceiverPlaceholder = "Cao hồng hà: Hương, Cảnh, Nam, Phong, Hậu\nNguyễn Duy Hưu: Jbagy, Hợp";
+  const singleReceiverNote = "Có thể nhập một hoặc nhiều tên, mỗi tên cách nhau bằng dấu phẩy (,).";
+  const batchReceiverNote = "Mỗi dòng theo mẫu Người bàn giao: Người nhận 1, Người nhận 2. Khi xuất ảnh hoặc in sẽ tự chạy tất cả các dòng.";
+  const multiEmployeeReceiverNote = "Đang chọn nhiều nhân viên: có thể nhập tên người nhận dùng chung, hoặc dán nhiều dòng dạng Người bàn giao: Người nhận 1, Người nhận 2.";
   const signatureFontsReady = SignatureAlgorithm.loadFontsFromFolder("fonts", "font");
 
   function escapeHtml(s) {
@@ -925,7 +1143,186 @@
       .filter(Boolean);
   }
 
+  function isMultiEmployeeMode() {
+    return !!multiEmployeeToggle.checked;
+  }
+
+  function getSelectedEmployeeNames() {
+    if (isMultiEmployeeMode()) {
+      return Array.from(employeeMultiList.querySelectorAll('input[type="checkbox"]:checked'))
+        .map((input) => input.value)
+        .filter(Boolean);
+    }
+
+    return employeeSelect.value ? [employeeSelect.value] : [];
+  }
+
+  function syncEmployeeSelectFromPicker() {
+    const selected = new Set(getSelectedEmployeeNames());
+    Array.from(employeeSelect.options).forEach((option) => {
+      option.selected = !!option.value && selected.has(option.value);
+    });
+  }
+
+  function updateEmployeeMultiSummary() {
+    const selected = getSelectedEmployeeNames();
+    if (!selected.length) {
+      employeeMultiSummary.textContent = "Chọn nhân viên";
+      return;
+    }
+    employeeMultiSummary.textContent = selected.length === 1
+      ? selected[0]
+      : `${selected.length} nhân viên đã chọn`;
+  }
+
+  function renderEmployeeMultiPicker() {
+    const selected = new Set(Array.from(employeeSelect.selectedOptions).map((option) => option.value).filter(Boolean));
+    const employees = Object.keys(empMap).sort((a, b) => a.localeCompare(b, "vi"));
+
+    employeeMultiList.innerHTML = employees.length
+      ? employees.map((empName) => `
+          <label class="employee-picker-option">
+            <input type="checkbox" value="${escapeHtml(empName)}"${selected.has(empName) ? " checked" : ""}>
+            <span>${escapeHtml(empName)}</span>
+          </label>
+        `).join("")
+      : '<div class="employee-picker-empty">Chưa có dữ liệu nhân viên</div>';
+
+    updateEmployeeMultiSummary();
+  }
+
+  function setAllEmployeeChecks(checked) {
+    employeeMultiList.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+      input.checked = checked;
+    });
+    syncEmployeeSelectFromPicker();
+    updateEmployeeMultiSummary();
+    clearPngPreview();
+  }
+
+  function setEmployeeMultiMenuOpen(isOpen) {
+    employeeMultiMenu.hidden = !isOpen;
+    employeeMultiToggleButton.setAttribute("aria-expanded", String(isOpen));
+  }
+
+  function updateEmployeeSelectMode() {
+    const multiMode = isMultiEmployeeMode();
+    employeeSelect.multiple = false;
+    employeeSelect.size = 1;
+    employeeSelect.hidden = multiMode;
+    employeeMultiPicker.hidden = !multiMode;
+    employeeSelect.title = isMultiEmployeeMode()
+      ? "Chọn nhiều nhân viên bàn giao"
+      : "Chọn nhân viên";
+    if (multiMode) {
+      renderEmployeeMultiPicker();
+    } else {
+      setEmployeeMultiMenuOpen(false);
+    }
+    clearPngPreview();
+  }
+
+  function normalizeLookupText(value) {
+    return String(value || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLocaleLowerCase("vi")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function resolveEmployeeName(inputName) {
+    const rawName = String(inputName || "").trim().replace(/\s+/g, " ");
+    if (!rawName) return "";
+    if (empMap[rawName]) return rawName;
+    const rawKey = normalizeLookupText(rawName);
+    return Object.keys(empMap).find((empName) => normalizeLookupText(empName) === rawKey) || rawName;
+  }
+
+  function parseBatchReceiverInput(value) {
+    const entries = [];
+    const invalidLines = [];
+    String(value || "").split(/\r?\n/).forEach((line, index) => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const separatorIndex = trimmed.indexOf(":");
+      if (separatorIndex < 1) {
+        invalidLines.push(index + 1);
+        return;
+      }
+      const empName = trimmed.slice(0, separatorIndex).trim();
+      const names = parseReceiverNames(trimmed.slice(separatorIndex + 1));
+      if (!empName || !names.length) {
+        invalidLines.push(index + 1);
+        return;
+      }
+      entries.push({ empName: resolveEmployeeName(empName), receiverNames: names });
+    });
+    return { entries, invalidLines };
+  }
+
+  function getReceiverContextsForSelectedEmployees(empNames, showAlert = true) {
+    const rawInput = String(receiverNamesInput.value || "");
+    const nonEmptyLines = rawInput.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const mappedByEmployee = nonEmptyLines.some((line) => line.includes(":"));
+
+    if (!mappedByEmployee) {
+      const sharedReceiverNames = parseReceiverNames(rawInput);
+      return empNames.map((empName) => ({ empName, receiverNames: sharedReceiverNames }));
+    }
+
+    const { entries, invalidLines } = parseBatchReceiverInput(rawInput);
+    if (invalidLines.length) {
+      if (showAlert) alert(`Các dòng chưa đúng mẫu: ${invalidLines.join(", ")}.\nHãy nhập theo dạng Người bàn giao: Người nhận 1, Người nhận 2`);
+      return null;
+    }
+
+    const receiverMap = new Map(entries.map((entry) => [normalizeLookupText(entry.empName), entry.receiverNames]));
+    return empNames.map((empName) => ({
+      empName,
+      receiverNames: receiverMap.get(normalizeLookupText(empName)) || []
+    }));
+  }
+
+  function isBatchMode() {
+    if (isMultiEmployeeMode()) return false;
+    return String(receiverNamesInput.value || "")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .some((line) => line.includes(":"));
+  }
+
+  function updateReceiverInputMode() {
+    const bulkReceiverMode = isBatchMode() || isMultiEmployeeMode();
+    receiverNamesInput.placeholder = bulkReceiverMode ? batchReceiverPlaceholder : singleReceiverPlaceholder;
+    receiverFieldNote.textContent = isMultiEmployeeMode()
+      ? multiEmployeeReceiverNote
+      : (isBatchMode() ? batchReceiverNote : singleReceiverNote);
+    updateReceiverStatus();
+  }
+
   function updateReceiverStatus() {
+    if (isMultiEmployeeMode()) {
+      const selectedCount = getSelectedEmployeeNames().length;
+      receiverStatus.textContent = selectedCount
+        ? `Đã chọn ${selectedCount} nhân viên. Người nhận sẽ tự áp dụng khi tạo/in/xuất.`
+        : "Đang bật chọn nhiều nhân viên.";
+      return;
+    }
+
+    if (isBatchMode()) {
+      const { entries, invalidLines } = parseBatchReceiverInput(receiverNamesInput.value);
+      if (invalidLines.length) {
+        receiverStatus.textContent = `Có ${invalidLines.length} dòng chưa đúng mẫu.`;
+        return;
+      }
+      receiverStatus.textContent = entries.length
+        ? `Chế độ hàng loạt: ${entries.length} người bàn giao.`
+        : "Chưa nhập danh sách hàng loạt.";
+      return;
+    }
+
     if (!receiverNames.length) {
       receiverStatus.textContent = "Chưa nhập người nhận.";
       return;
@@ -966,8 +1363,8 @@
   }
 
   function selectedSignatureFontSize() {
-    if (signatureSizeInput.value === "") return 26;
-    const value = Math.max(1, Math.min(50, Number(signatureSizeInput.value) || 26));
+    if (signatureSizeInput.value === "") return 25;
+    const value = Math.max(1, Math.min(50, Number(signatureSizeInput.value) || 25));
     if (String(value) !== signatureSizeInput.value) signatureSizeInput.value = value;
     return value;
   }
@@ -988,9 +1385,10 @@
       .replace(/_+/g, "_") || "bien_ban_ban_giao";
   }
 
-  function pngFileName(index, total) {
+  function imageFileName(pageEl, index, total) {
     const pageSuffix = total > 1 ? `_trang_${String(index + 1).padStart(2, "0")}` : "";
-    return `${sanitizeFileNamePart(activeEmpName)}${fileDateString()}${pageSuffix}.png`;
+    const empName = pageEl?.dataset?.empName || activeEmpName || "bien_ban_ban_giao";
+    return `${sanitizeFileNamePart(empName)}${fileDateString()}${pageSuffix}.jpg`;
   }
 
   function ensureHandoverSignature(empName, force = false) {
@@ -1005,9 +1403,19 @@
 
   function randomizeReceiverSignatures() {
     syncSignatureFontSize();
-    const compact = receiverNames.length > 2;
+    receiverSignatureStates = makeReceiverSignatureStates(receiverNames);
+    receiverSignaturesReady = receiverNames.length > 0;
+  }
+
+  function makeReceiverSignatureStates(names) {
+    const compact = names.length > 2;
     const avoidFonts = handoverSignatureState && handoverSignatureState.fontFamily ? [handoverSignatureState.fontFamily] : [];
-    receiverSignatureStates = receiverNames.map(() => SignatureAlgorithm.makeSignatureState(compact ? "compact" : "normal", "receiver", avoidFonts));
+    return names.map(() => SignatureAlgorithm.makeSignatureState(compact ? "compact" : "normal", "receiver", avoidFonts));
+  }
+
+  function applyReceiverContext(names, states = null) {
+    receiverNames = [...names];
+    receiverSignatureStates = states || makeReceiverSignatureStates(receiverNames);
     receiverSignaturesReady = receiverNames.length > 0;
   }
 
@@ -1023,6 +1431,12 @@
   }
 
   function saveReceiverNames(makeSignatures = false) {
+    if (isBatchMode()) {
+      updateReceiverStatus();
+      clearPngPreview();
+      return;
+    }
+
     const nextNames = parseReceiverNames(receiverNamesInput.value);
     receiverNames = nextNames;
 
@@ -1289,9 +1703,10 @@
     if (count > 0) tbody.insertAdjacentHTML("beforeend", EMPTY_TABLE_ROW_HTML.repeat(count));
   }
 
-  function createContinuationPage() {
+  function createContinuationPage(empName = "") {
     const contPage = document.createElement("div");
     contPage.className = "page-continuation";
+    if (empName) contPage.dataset.empName = empName;
 
     const tblWrap = document.createElement("div");
     tblWrap.className = "tbl-wrap";
@@ -1368,37 +1783,29 @@
 
     removeSignatureFromPage(lastPage);
 
-    const finalPage = createContinuationPage();
+    const finalPage = createContinuationPage(empName);
     appendPage(finalPage.page, shouldUpdateLabels);
     appendSignatureToPage(finalPage.page, empName);
     removeEmptyContinuationPages(shouldUpdateLabels);
   }
 
-  function paginateRows(empName, codes) {
-    pagesWrapper.classList.add("is-paginating");
-    pagesWrapper.innerHTML = "";
-    pagesWrapper.style.transform = "";
-    previewShell.style.height = "";
-    currentPageIndex = 0;
-
+  function appendDocumentPages(empName, codes) {
     const { maBC, tenBC } = getBcInfo();
     const firstPage = htmlToElement(createFirstPageSkeleton(empName, CURRENT_DATE_STR, maBC, tenBC));
+    if (empName) firstPage.dataset.empName = empName;
     const firstTbody = firstPage.querySelector(".codes tbody");
     appendPage(firstPage, false);
 
     if (!codes || !codes.length) {
       appendEmptyRows(firstTbody, 8);
       appendSignatureWithPagination(empName, false);
-      pagesWrapper.classList.remove("is-paginating");
-      updatePageLabels();
-      schedulePreviewFit();
       return;
     }
 
     let currentIndex = appendMeasuredCodeRows(firstPage, firstTbody, codes, 0);
 
     while (currentIndex < codes.length) {
-      const contPage = createContinuationPage();
+      const contPage = createContinuationPage(empName);
       appendPage(contPage.page, false);
 
       const nextIndex = appendMeasuredCodeRows(contPage.page, contPage.tbody, codes, currentIndex);
@@ -1406,9 +1813,103 @@
     }
 
     appendSignatureWithPagination(empName, false);
+  }
+
+  function resetPagesForRender() {
+    pagesWrapper.classList.add("is-paginating");
+    pagesWrapper.innerHTML = "";
+    pagesWrapper.style.transform = "";
+    previewShell.style.height = "";
+    currentPageIndex = 0;
+  }
+
+  function finishPagesRender() {
     pagesWrapper.classList.remove("is-paginating");
     updatePageLabels();
     schedulePreviewFit();
+  }
+
+  function paginateRows(empName, codes) {
+    resetPagesForRender();
+    appendDocumentPages(empName, codes);
+    finishPagesRender();
+  }
+
+  function buildBatchEntriesFromInput(showAlert = true) {
+    const { entries, invalidLines } = parseBatchReceiverInput(receiverNamesInput.value);
+    if (invalidLines.length) {
+      if (showAlert) alert(`Các dòng chưa đúng mẫu: ${invalidLines.join(", ")}.\nHãy nhập theo dạng Người bàn giao: Người nhận 1, Người nhận 2`);
+      return [];
+    }
+    if (!entries.length) {
+      if (showAlert) alert("Hãy nhập danh sách hàng loạt trước.");
+      return [];
+    }
+
+    const hasExcelData = Object.keys(empMap).length > 0;
+    if (!hasExcelData) {
+      if (showAlert) alert("Hãy nạp file Excel trước khi tạo hàng loạt.");
+      return [];
+    }
+
+    const missingEmployees = entries.filter((entry) => !empMap[entry.empName]).map((entry) => entry.empName);
+    if (missingEmployees.length) {
+      if (showAlert) alert(`Không tìm thấy người bàn giao trong file Excel: ${missingEmployees.join(", ")}`);
+      return [];
+    }
+
+    return entries.map((entry) => ({
+      ...entry,
+      codes: empMap[entry.empName] || []
+    }));
+  }
+
+  async function renderBatchDocumentsFromInput(showAlert = true) {
+    const entries = buildBatchEntriesFromInput(showAlert);
+    if (!entries.length) return false;
+
+    await signatureFontsReady;
+    resetPagesForRender();
+    entries.forEach((entry) => {
+      ensureHandoverSignature(entry.empName, true);
+      applyReceiverContext(entry.receiverNames);
+      appendDocumentPages(entry.empName, entry.codes);
+    });
+    activeEmpName = entries.length === 1 ? entries[0].empName : "bien_ban_hang_loat";
+    activeCodes = [];
+    hasGeneratedDocument = true;
+    finishPagesRender();
+    updateReceiverStatus();
+    return true;
+  }
+
+  async function renderSelectedEmployeeDocumentsFromSelect(showAlert = true) {
+    const empNames = getSelectedEmployeeNames();
+    if (!Object.keys(empMap).length) {
+      if (showAlert) alert("Hãy nạp file Excel trước khi chọn nhiều nhân viên.");
+      return false;
+    }
+    if (!empNames.length) {
+      if (showAlert) alert("Hãy chọn ít nhất một nhân viên bàn giao.");
+      return false;
+    }
+
+    const receiverContexts = getReceiverContextsForSelectedEmployees(empNames, showAlert);
+    if (!receiverContexts) return false;
+
+    await signatureFontsReady;
+    resetPagesForRender();
+    receiverContexts.forEach((context) => {
+      ensureHandoverSignature(context.empName, true);
+      applyReceiverContext(context.receiverNames);
+      appendDocumentPages(context.empName, empMap[context.empName] || []);
+    });
+    activeEmpName = empNames.length === 1 ? empNames[0] : "bien_ban_nhieu_nhan_vien";
+    activeCodes = [];
+    hasGeneratedDocument = true;
+    finishPagesRender();
+    updateReceiverStatus();
+    return true;
   }
 
   function showInitialTemplate() {
@@ -1431,6 +1932,14 @@
 
   function rerenderCurrentDocument() {
     clearPngPreview();
+    if (isBatchMode() && hasGeneratedDocument) {
+      renderBatchDocumentsFromInput(false);
+      return;
+    }
+    if (isMultiEmployeeMode() && hasGeneratedDocument) {
+      renderSelectedEmployeeDocumentsFromSelect(false);
+      return;
+    }
     if (hasGeneratedDocument) {
       paginateRows(activeEmpName, activeCodes);
     } else {
@@ -1438,12 +1947,20 @@
     }
   }
 
-  function canvasToPngBlob(canvas) {
+  function canvasToJpegBlob(canvas) {
     return new Promise((resolve, reject) => {
-      canvas.toBlob((blob) => {
+      const outputCanvas = document.createElement("canvas");
+      outputCanvas.width = canvas.width;
+      outputCanvas.height = canvas.height;
+      const ctx = outputCanvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+      ctx.drawImage(canvas, 0, 0);
+
+      outputCanvas.toBlob((blob) => {
         if (blob) resolve(blob);
-        else reject(new Error("Không tạo được PNG blob."));
-      }, "image/png");
+        else reject(new Error("Không tạo được JPG blob."));
+      }, "image/jpeg", 0.86);
     });
   }
 
@@ -1689,12 +2206,12 @@
 
   function setExportBusy(isBusy) {
     btnExportPng.disabled = isBusy;
-    btnExportPng.textContent = isBusy ? "Đang tạo PNG..." : "Xuất PNG";
+    btnExportPng.textContent = isBusy ? "Đang tạo ảnh..." : "Xuất ảnh";
   }
 
   function setCopyBusy(isBusy) {
     btnCopyPreviewPng.disabled = isBusy;
-    btnCopyPreviewPng.textContent = isBusy ? "Đang copy..." : "Copy PNG";
+    btnCopyPreviewPng.textContent = isBusy ? "Đang copy..." : "Copy ảnh";
   }
 
   function clearPngPreview() {
@@ -1713,10 +2230,10 @@
     pngPreviewFiles = files;
     pngPreviewBody.innerHTML = files.map((file, index) => `
       <div class="png-preview-page">
-        <img src="${file.url}" alt="Trang PNG ${index + 1}" loading="lazy" decoding="async">
+        <img src="${file.url}" alt="Trang ảnh ${index + 1}" loading="lazy" decoding="async">
       </div>
     `).join("");
-    pngPreviewNote.textContent = `Đã tạo ${files.length} trang PNG. Có thể Copy PNG hoặc Tải PNG.`;
+    pngPreviewNote.textContent = `Đã tạo ${files.length} ảnh JPG. Có thể copy ảnh hoặc tải JPG.`;
     pngPreviewModal.classList.add("is-open");
     pngPreviewModal.setAttribute("aria-hidden", "false");
   }
@@ -1728,7 +2245,7 @@
 
   function downloadPreviewPngFiles() {
     if (!pngPreviewFiles.length) {
-      alert("Chưa có PNG để tải.");
+      alert("Chưa có ảnh để tải.");
       return;
     }
 
@@ -1744,11 +2261,11 @@
 
   async function copyPreviewPngFiles() {
     if (!pngPreviewFiles.length) {
-      alert("Chưa có PNG để copy.");
+      alert("Chưa có ảnh để copy.");
       return;
     }
     if (!navigator.clipboard || !window.ClipboardItem) {
-      alert("Trình duyệt hiện tại chưa hỗ trợ copy ảnh PNG. Hãy dùng nút Tải PNG.");
+      alert("Trình duyệt hiện tại chưa hỗ trợ copy ảnh. Hãy dùng nút Tải JPG.");
       return;
     }
 
@@ -1756,28 +2273,36 @@
       setCopyBusy(true);
       const file = pngPreviewFiles[0];
       await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": file.blob })
+        new ClipboardItem({ [file.blob.type || "image/jpeg"]: file.blob })
       ]);
       pngPreviewNote.textContent = pngPreviewFiles.length > 1
         ? `Đã copy trang 1/${pngPreviewFiles.length} vào clipboard.`
-        : "Đã copy PNG vào clipboard.";
+        : "Đã copy ảnh vào clipboard.";
     } catch (err) {
       console.error(err);
-      alert("Không copy được PNG. Hãy thử tải PNG hoặc mở bằng Chrome/Edge.");
+      alert("Không copy được ảnh. Hãy thử tải JPG hoặc mở bằng Chrome/Edge.");
     } finally {
       setCopyBusy(false);
     }
   }
 
   async function exportPagesAsPng() {
+    if (isMultiEmployeeMode()) {
+      const rendered = await renderSelectedEmployeeDocumentsFromSelect(true);
+      if (!rendered) return;
+    } else if (isBatchMode()) {
+      const rendered = await renderBatchDocumentsFromInput(true);
+      if (!rendered) return;
+    }
+
     if (!hasGeneratedDocument) {
-      alert("Hãy tạo biên bản trước khi xuất PNG.");
+      alert("Hãy tạo biên bản trước khi xuất ảnh.");
       return;
     }
 
     const pageEls = getPageEls();
     if (!pageEls.length) return alert("Chưa có trang biên bản để xuất.");
-    if (!window.html2canvas) return alert("Chưa tải được thư viện xuất PNG. Hãy kiểm tra kết nối mạng.");
+    if (!window.html2canvas) return alert("Chưa tải được thư viện xuất ảnh. Hãy kiểm tra kết nối mạng.");
 
     const oldTransform = pagesWrapper.style.transform;
     const oldHeight = previewShell.style.height;
@@ -1797,7 +2322,7 @@
           img.src = blackLogo;
         });
       } catch (logoErr) {
-        console.warn("Không đổi được logo sang ảnh đen, dùng CSS filter khi xuất PNG:", logoErr);
+        console.warn("Không đổi được logo sang ảnh đen, dùng CSS filter khi xuất ảnh:", logoErr);
       }
 
       await waitForImages(pagesWrapper);
@@ -1812,15 +2337,15 @@
         pagesWrapper.style.transform = "";
         previewShell.style.height = "";
         const canvas = await html2canvas(pageEls[i], {
-          backgroundColor: null,
-          scale: 4,
+          backgroundColor: "#fff",
+          scale: 3,
           useCORS: true,
           logging: false
         });
         const composedCanvas = await composePageOnBackground(canvas, i);
-        const blob = await canvasToPngBlob(composedCanvas);
+        const blob = await canvasToJpegBlob(composedCanvas);
         files.push({
-          name: pngFileName(i, pageEls.length),
+          name: imageFileName(pageEls[i], i, pageEls.length),
           url: blobToObjectUrl(blob),
           blob
         });
@@ -1828,7 +2353,7 @@
       showPngPreview(files);
     } catch (err) {
       console.error(err);
-      alert("Không xuất được PNG. Nếu lỗi do logo online, hãy thử lại khi có mạng ổn định.");
+      alert("Không xuất được ảnh. Nếu lỗi do logo online, hãy thử lại khi có mạng ổn định.");
     } finally {
       logoImgs.forEach((img, index) => {
         img.src = originalLogoSrcs[index] || LOGO_URL;
@@ -1842,8 +2367,16 @@
   }
 
   async function printCurrentDocument() {
-    if (hasGeneratedDocument) {
-      paginateRows(activeEmpName, activeCodes);
+    if (isMultiEmployeeMode()) {
+      const rendered = await renderSelectedEmployeeDocumentsFromSelect(true);
+      if (!rendered) return;
+    } else if (isBatchMode()) {
+      const rendered = await renderBatchDocumentsFromInput(true);
+      if (!rendered) return;
+    } else {
+      if (hasGeneratedDocument) {
+        paginateRows(activeEmpName, activeCodes);
+      }
     }
 
     pagesWrapper.style.transform = "";
@@ -1864,7 +2397,8 @@
 
   syncSignatureFontSize();
   showInitialTemplate();
-  updateReceiverStatus();
+  updateEmployeeSelectMode();
+  updateReceiverInputMode();
 
   inventoryFile.addEventListener("change", (e) => {
     const file = e.target.files[0];
@@ -1896,6 +2430,7 @@
           o.textContent = k;
           employeeSelect.appendChild(o);
         });
+        updateEmployeeSelectMode();
 
         alert("Đã nạp dữ liệu nhân viên từ Excel.");
       } catch (err) {
@@ -1907,6 +2442,15 @@
   });
 
   btnGenerate.addEventListener("click", async () => {
+    if (isMultiEmployeeMode()) {
+      await renderSelectedEmployeeDocumentsFromSelect(true);
+      return;
+    }
+    if (isBatchMode()) {
+      await renderBatchDocumentsFromInput(true);
+      return;
+    }
+
     const empName = employeeSelect.value;
     if (!empName) return alert("Hãy chọn nhân viên bàn giao.");
 
@@ -1930,6 +2474,38 @@
     saveReceiverNames(false);
   });
 
+  multiEmployeeToggle.addEventListener("change", () => {
+    updateEmployeeSelectMode();
+    updateReceiverInputMode();
+    if (hasGeneratedDocument) rerenderCurrentDocument();
+  });
+  employeeMultiToggleButton.addEventListener("click", () => {
+    setEmployeeMultiMenuOpen(employeeMultiMenu.hidden);
+  });
+  employeeMultiList.addEventListener("change", () => {
+    syncEmployeeSelectFromPicker();
+    updateEmployeeMultiSummary();
+    updateReceiverStatus();
+    clearPngPreview();
+    if (isMultiEmployeeMode() && hasGeneratedDocument) rerenderCurrentDocument();
+  });
+  btnSelectAllEmployees.addEventListener("click", () => {
+    setAllEmployeeChecks(true);
+    updateReceiverStatus();
+    if (isMultiEmployeeMode() && hasGeneratedDocument) rerenderCurrentDocument();
+  });
+  btnClearEmployees.addEventListener("click", () => {
+    setAllEmployeeChecks(false);
+    updateReceiverStatus();
+    if (isMultiEmployeeMode() && hasGeneratedDocument) rerenderCurrentDocument();
+  });
+  document.addEventListener("click", (event) => {
+    if (employeeMultiPicker.hidden || employeeMultiPicker.contains(event.target)) return;
+    setEmployeeMultiMenuOpen(false);
+  });
+  receiverNamesInput.addEventListener("input", () => {
+    updateReceiverInputMode();
+  });
   btnExportPng.addEventListener("click", exportPagesAsPng);
   btnCopyPreviewPng.addEventListener("click", copyPreviewPngFiles);
   btnDownloadPreviewPng.addEventListener("click", downloadPreviewPngFiles);
