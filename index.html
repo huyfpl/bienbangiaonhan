@@ -10,7 +10,7 @@
   <script src="js/banner.js" defer></script>
   <style>
     :root {
-      --paper: #f7f2e8;
+      --paper: #fbf8f1;
       --ink: #111;
       --muted: #64717d;
       --line: #d7e0e7;
@@ -137,7 +137,7 @@
 
     .control-grid {
       display: grid;
-      grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(145px, 1fr));
+      grid-template-columns: minmax(220px, 1.3fr) minmax(210px, 1.3fr) minmax(170px, 1fr) minmax(170px, 1fr);
       gap: 10px;
       align-items: end;
       overflow: visible;
@@ -590,19 +590,19 @@
       margin: 0 auto;
       background-color: var(--paper);
       background-image:
-        repeating-linear-gradient(94deg, rgba(93, 78, 51, 0.026) 0 1px, transparent 1px 9px),
-        repeating-linear-gradient(3deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 12px),
-        repeating-linear-gradient(137deg, transparent 0 14px, rgba(120, 104, 72, 0.018) 14px 15px, transparent 15px 30px),
-        radial-gradient(ellipse at 20% 14%, rgba(118, 96, 60, 0.055) 0, transparent 35%),
-        radial-gradient(ellipse at 72% 76%, rgba(92, 74, 45, 0.046) 0, transparent 42%),
-        radial-gradient(ellipse at 42% 42%, rgba(255, 255, 255, 0.32) 0, transparent 48%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(226, 216, 193, 0.12));
+        repeating-linear-gradient(94deg, rgba(93, 78, 51, 0.013) 0 1px, transparent 1px 9px),
+        repeating-linear-gradient(3deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 12px),
+        repeating-linear-gradient(137deg, transparent 0 14px, rgba(120, 104, 72, 0.009) 14px 15px, transparent 15px 30px),
+        radial-gradient(ellipse at 20% 14%, rgba(118, 96, 60, 0.028) 0, transparent 35%),
+        radial-gradient(ellipse at 72% 76%, rgba(92, 74, 45, 0.022) 0, transparent 42%),
+        radial-gradient(ellipse at 42% 42%, rgba(255, 255, 255, 0.4) 0, transparent 48%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(233, 224, 203, 0.07));
       background-size: 100% 100%, 100% 100%, 120px 120px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
       padding: 12mm;
       box-shadow:
-        inset 0 0 0 1px rgba(150, 135, 100, 0.16),
-        inset 0 0 24mm rgba(90, 76, 45, 0.035),
-        0 0 6px rgba(0,0,0,0.08);
+        inset 0 0 0 1px rgba(150, 135, 100, 0.1),
+        inset 0 0 24mm rgba(90, 76, 45, 0.02),
+        0 0 6px rgba(0,0,0,0.06);
       page-break-after: always;
       font-family: "Times New Roman", Times, serif;
       overflow: hidden;
@@ -1073,26 +1073,6 @@
           </select>
         </label>
 
-        <label class="field">
-          <span>Cỡ chữ ký</span>
-          <input type="number" id="signatureSizeInput" min="1" max="50" step="1" value="25" title="Nhập cỡ chữ ký từ 1 đến 50"/>
-        </label>
-
-        <label class="field">
-          <span>Nền giấy tải lên</span>
-          <input type="file" id="pngBackgroundFile" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" title="Tải ảnh làm nền của tờ giấy khi xuất ảnh"/>
-        </label>
-
-        <label class="checkbox-field" title="Dùng ảnh tải lên làm nền của tờ giấy khi xuất ảnh">
-          <input type="checkbox" id="pngUseUploadedBackgroundToggle" checked>
-          <span>Dùng nền giấy tải lên</span>
-        </label>
-
-        <label class="checkbox-field" title="Lọc bỏ mã vận đơn trùng khi nạp Excel và khi xuất ảnh">
-          <input type="checkbox" id="dedupeToggle" checked>
-          <span>Lọc trùng mã</span>
-        </label>
-
       </div>
 
       <div class="primary-action">
@@ -1123,6 +1103,7 @@
         <div class="field-note">Có thể nhập một hoặc nhiều tên, mỗi tên cách nhau bằng dấu phẩy (,).</div>
         <div class="receiver-actions">
           <button type="button" id="btnSaveReceiver" class="ghost">Lưu tên người nhận</button>
+          <button type="button" id="btnClearReceiver" class="ghost">Xoá tên đã lưu</button>
         </div>
         <div class="receiver-status" id="receiverStatus">Chưa nhập người nhận.</div>
       </div>
@@ -1190,10 +1171,6 @@
   const employeeMultiList = document.getElementById("employeeMultiList");
   const btnSelectAllEmployees = document.getElementById("btnSelectAllEmployees");
   const btnClearEmployees = document.getElementById("btnClearEmployees");
-  const signatureSizeInput = document.getElementById("signatureSizeInput");
-  const pngBackgroundFile = document.getElementById("pngBackgroundFile");
-  const pngUseUploadedBackgroundToggle = document.getElementById("pngUseUploadedBackgroundToggle");
-  const dedupeToggle = document.getElementById("dedupeToggle");
   const btnGenerate = document.getElementById("btnGenerate");
   const btnToggleReceiver = document.getElementById("btnToggleReceiver");
   const btnExportPng = document.getElementById("btnExportPng");
@@ -1201,6 +1178,7 @@
   const receiverPanel = document.getElementById("receiverPanel");
   const receiverNamesInput = document.getElementById("receiverNamesInput");
   const btnSaveReceiver = document.getElementById("btnSaveReceiver");
+  const btnClearReceiver = document.getElementById("btnClearReceiver");
   const receiverStatus = document.getElementById("receiverStatus");
   const receiverFieldNote = receiverPanel.querySelector(".field-note");
   const previewShell = document.getElementById("previewShell");
@@ -1222,7 +1200,6 @@
 
   let rawEmpMap = {};
   let empMap = {};
-  let duplicateCodesRemoved = 0;
   let receiverNames = [];
   let receiverSignatureStates = [];
   let receiverSignaturesReady = false;
@@ -1234,14 +1211,10 @@
   let pngPreviewFiles = [];
   let blackLogoDataUrl = "";
   let currentPageIndex = 0;
-  let uploadedBackgroundDataUrl = "";
   let pageMetrics = [];
   let previewScrollRaf = 0;
-  let signatureResizeRaf = 0;
-  let signatureResizeTimer = 0;
   let receiverInputRaf = 0;
   let windowResizeRaf = 0;
-  let uploadedBackgroundImage = null;
   let activeCursorSparkles = 0;
   let lastCursorSparkleAt = 0;
   const singleReceiverPlaceholder = "Ví dụ: Nguyễn Văn A, Trần Thị B";
@@ -1341,27 +1314,21 @@
   }
 
   function rebuildEmployeeData() {
-    const shouldDedupe = !!dedupeToggle.checked;
     const nextMap = {};
     const seenCodes = new Set();
-    let removed = 0;
 
     Object.entries(rawEmpMap).forEach(([empName, codes]) => {
       nextMap[empName] = [];
       codes.forEach((code) => {
         const key = normalizeCodeKey(code);
         if (!key) return;
-        if (shouldDedupe && seenCodes.has(key)) {
-          removed++;
-          return;
-        }
+        if (seenCodes.has(key)) return;
         seenCodes.add(key);
         nextMap[empName].push(code);
       });
     });
 
     empMap = nextMap;
-    duplicateCodesRemoved = removed;
     if (activeEmpName && empMap[activeEmpName]) activeCodes = empMap[activeEmpName];
     renderEmployeeOptions();
   }
@@ -1585,24 +1552,6 @@
     };
   }
 
-  function selectedSignatureFontSize() {
-    if (signatureSizeInput.value === "") return 25;
-    const value = Math.max(1, Math.min(50, Number(signatureSizeInput.value) || 25));
-    if (String(value) !== signatureSizeInput.value) signatureSizeInput.value = value;
-    return value;
-  }
-
-  function syncSignatureFontSize() {
-    return SignatureAlgorithm.setBaseFontSize(selectedSignatureFontSize());
-  }
-
-  function resizeSignatureStates(size) {
-    if (handoverSignatureState) handoverSignatureState.fontSize = size;
-    receiverSignatureStates.forEach((state) => {
-      if (state) state.fontSize = size;
-    });
-  }
-
   function fileDateString(date = new Date()) {
     return `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`;
   }
@@ -1623,7 +1572,6 @@
 
   function ensureHandoverSignature(empName, force = false) {
     if (!empName) return null;
-    syncSignatureFontSize();
     if (force || !handoverSignatureState || handoverSignatureName !== empName) {
       handoverSignatureState = SignatureAlgorithm.makeSignatureState("normal", "handover");
       handoverSignatureName = empName;
@@ -1632,7 +1580,6 @@
   }
 
   function randomizeReceiverSignatures() {
-    syncSignatureFontSize();
     receiverSignatureStates = makeReceiverSignatureStates(receiverNames);
     receiverSignaturesReady = receiverNames.length > 0;
   }
@@ -1649,34 +1596,39 @@
     receiverSignaturesReady = receiverNames.length > 0;
   }
 
-  function refreshSignatureSizing() {
-    const size = syncSignatureFontSize();
-    resizeSignatureStates(size);
-    if (signatureResizeTimer) {
-      clearTimeout(signatureResizeTimer);
-      signatureResizeTimer = 0;
+  const RECEIVER_STORAGE_KEY = "bbbg_receiver_names_v1";
+
+  function loadSavedReceiverNames() {
+    try {
+      return String(localStorage.getItem(RECEIVER_STORAGE_KEY) || "");
+    } catch (err) {
+      console.warn("Không đọc được tên người nhận đã lưu:", err);
+      return "";
     }
-    rerenderCurrentDocument();
   }
 
-  function scheduleSignatureSizingRefresh() {
-    const size = syncSignatureFontSize();
-    resizeSignatureStates(size);
-
-    if (!signatureResizeRaf) {
-      signatureResizeRaf = requestAnimationFrame(() => {
-        signatureResizeRaf = 0;
-        SignatureAlgorithm.paintSignatures(pagesWrapper).catch((err) => {
-          console.warn("Không vẽ được chữ ký khi đổi cỡ:", err);
-        });
-      });
+  function persistReceiverNames(value) {
+    try {
+      if (String(value || "").trim()) {
+        localStorage.setItem(RECEIVER_STORAGE_KEY, String(value));
+      } else {
+        localStorage.removeItem(RECEIVER_STORAGE_KEY);
+      }
+      return true;
+    } catch (err) {
+      console.warn("Không lưu được tên người nhận vào máy:", err);
+      return false;
     }
+  }
 
-    if (signatureResizeTimer) clearTimeout(signatureResizeTimer);
-    signatureResizeTimer = window.setTimeout(() => {
-      signatureResizeTimer = 0;
-      rerenderCurrentDocument();
-    }, 130);
+  function restoreSavedReceiverNames() {
+    const savedValue = loadSavedReceiverNames();
+    if (!savedValue) return;
+    receiverNamesInput.value = savedValue;
+    if (!isBatchMode()) {
+      receiverNames = parseReceiverNames(savedValue);
+    }
+    updateReceiverStatus();
   }
 
   function saveReceiverNames(makeSignatures = false) {
@@ -1977,24 +1929,34 @@
 
   function appendMeasuredCodeRows(pageEl, tbody, codes, startIndex) {
     let currentIndex = startIndex;
+    const chunkRows = 4;
 
     while (currentIndex < codes.length) {
-      const rowHtml = buildTableRows(codes, currentIndex, 1)[0];
-      if (!rowHtml) break;
+      const rowsBefore = tbody.childElementCount;
+      const rowsToTry = Math.min(chunkRows, Math.ceil((codes.length - currentIndex) / TABLE_COLS));
+      const chunkHtml = buildTableRows(codes, currentIndex, rowsToTry).join("");
+      if (!chunkHtml) break;
 
-      tbody.insertAdjacentHTML("beforeend", rowHtml);
-      const insertedRow = tbody.lastElementChild;
+      tbody.insertAdjacentHTML("beforeend", chunkHtml);
 
       if (isPageOverflowing(pageEl)) {
-        insertedRow.remove();
-        if (currentIndex === startIndex) {
-          tbody.insertAdjacentHTML("beforeend", rowHtml);
-          currentIndex += TABLE_COLS;
+        while (tbody.childElementCount > rowsBefore && isPageOverflowing(pageEl)) {
+          tbody.lastElementChild.remove();
         }
+
+        if (tbody.childElementCount === rowsBefore) {
+          if (currentIndex === startIndex) {
+            tbody.insertAdjacentHTML("beforeend", buildTableRows(codes, currentIndex, 1)[0]);
+            currentIndex += TABLE_COLS;
+          }
+          break;
+        }
+
+        currentIndex += (tbody.childElementCount - rowsBefore) * TABLE_COLS;
         break;
       }
 
-      currentIndex += TABLE_COLS;
+      currentIndex += rowsToTry * TABLE_COLS;
     }
 
     return currentIndex;
@@ -2119,11 +2081,16 @@
 
     await signatureFontsReady;
     resetPagesForRender();
-    entries.forEach((entry) => {
+    setExportProgress(true, "Đang tạo biên bản hàng loạt...", 0, entries.length);
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      setExportProgress(true, `Đang tạo biên bản ${i + 1} / ${entries.length}: ${entry.empName}`, i, entries.length);
+      await yieldToUI();
       ensureHandoverSignature(entry.empName, true);
       applyReceiverContext(entry.receiverNames);
       appendDocumentPages(entry.empName, entry.codes);
-    });
+    }
+    setExportProgress(false);
     activeEmpName = entries.length === 1 ? entries[0].empName : "bien_ban_hang_loat";
     activeCodes = [];
     hasGeneratedDocument = true;
@@ -2148,11 +2115,16 @@
 
     await signatureFontsReady;
     resetPagesForRender();
-    receiverContexts.forEach((context) => {
+    setExportProgress(true, "Đang tạo biên bản cho các nhân viên đã chọn...", 0, receiverContexts.length);
+    for (let i = 0; i < receiverContexts.length; i++) {
+      const context = receiverContexts[i];
+      setExportProgress(true, `Đang tạo biên bản ${i + 1} / ${receiverContexts.length}: ${context.empName}`, i, receiverContexts.length);
+      await yieldToUI();
       ensureHandoverSignature(context.empName, true);
       applyReceiverContext(context.receiverNames);
       appendDocumentPages(context.empName, empMap[context.empName] || []);
-    });
+    }
+    setExportProgress(false);
     activeEmpName = empNames.length === 1 ? empNames[0] : "bien_ban_nhieu_nhan_vien";
     activeCodes = [];
     hasGeneratedDocument = true;
@@ -2202,7 +2174,7 @@
       outputCanvas.width = canvas.width;
       outputCanvas.height = canvas.height;
       const ctx = outputCanvas.getContext("2d");
-      ctx.fillStyle = "#f7f2e8";
+      ctx.fillStyle = "#f9f5ec";
       ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
       ctx.drawImage(canvas, 0, 0);
 
@@ -2227,7 +2199,7 @@
   }
 
   function drawDefaultPaperBase(ctx, x, y, width, height) {
-    ctx.fillStyle = "#f2ead9";
+    ctx.fillStyle = "#f9f5ec";
     ctx.fillRect(x, y, width, height);
 
     const centerWash = ctx.createRadialGradient(
@@ -2238,17 +2210,17 @@
       y + height * 0.48,
       width * 0.76
     );
-    centerWash.addColorStop(0, "rgba(255, 255, 255, 0.34)");
-    centerWash.addColorStop(0.58, "rgba(246, 239, 221, 0.14)");
-    centerWash.addColorStop(1, "rgba(158, 130, 82, 0.16)");
+    centerWash.addColorStop(0, "rgba(255, 255, 255, 0.45)");
+    centerWash.addColorStop(0.58, "rgba(249, 244, 231, 0.1)");
+    centerWash.addColorStop(1, "rgba(176, 152, 108, 0.09)");
     ctx.fillStyle = centerWash;
     ctx.fillRect(x, y, width, height);
 
     const fiberWash = ctx.createLinearGradient(x, y, x + width, y + height);
-    fiberWash.addColorStop(0, "rgba(255, 255, 255, 0.18)");
-    fiberWash.addColorStop(0.36, "rgba(222, 209, 180, 0.12)");
-    fiberWash.addColorStop(0.68, "rgba(255, 255, 255, 0.16)");
-    fiberWash.addColorStop(1, "rgba(175, 146, 94, 0.12)");
+    fiberWash.addColorStop(0, "rgba(255, 255, 255, 0.22)");
+    fiberWash.addColorStop(0.36, "rgba(232, 222, 199, 0.07)");
+    fiberWash.addColorStop(0.68, "rgba(255, 255, 255, 0.18)");
+    fiberWash.addColorStop(1, "rgba(190, 163, 118, 0.07)");
     ctx.fillStyle = fiberWash;
     ctx.fillRect(x, y, width, height);
   }
@@ -2259,32 +2231,32 @@
     ctx.rect(x, y, width, height);
     ctx.clip();
 
-    const grainScale = 0.58;
+    const grainScale = 0.34;
     const grainWidth = Math.max(1, Math.round(width * grainScale));
     const grainHeight = Math.max(1, Math.round(height * grainScale));
     const grain = ctx.createImageData(grainWidth, grainHeight);
     for (let i = 0; i < grain.data.length; i += 4) {
-      const warm = 226 + Math.floor(Math.random() * 22);
-      const speck = Math.random() > 0.976 ? -24 : (Math.random() > 0.962 ? 14 : 0);
+      const warm = 232 + Math.floor(Math.random() * 16);
+      const speck = Math.random() > 0.985 ? -16 : (Math.random() > 0.972 ? 9 : 0);
       grain.data[i] = Math.max(0, warm + speck);
-      grain.data[i + 1] = Math.max(0, warm - 3 + speck);
-      grain.data[i + 2] = Math.max(0, warm - 11 + speck);
-      grain.data[i + 3] = Math.round((15 + Math.random() * 22) * intensity);
+      grain.data[i + 1] = Math.max(0, warm - 2 + speck);
+      grain.data[i + 2] = Math.max(0, warm - 8 + speck);
+      grain.data[i + 3] = Math.round((8 + Math.random() * 13) * intensity);
     }
     const texture = document.createElement("canvas");
     texture.width = grainWidth;
     texture.height = grainHeight;
     texture.getContext("2d").putImageData(grain, 0, 0);
-    ctx.globalAlpha = 0.72 * intensity;
+    ctx.globalAlpha = 0.55 * intensity;
     ctx.drawImage(texture, x, y, width, height);
 
-    ctx.globalAlpha = 0.12 * intensity;
+    ctx.globalAlpha = 0.08 * intensity;
     ctx.lineCap = "round";
-    for (let i = 0; i < 170; i++) {
+    for (let i = 0; i < 70; i++) {
       const sx = x + Math.random() * width;
       const sy = y + Math.random() * height;
       const len = width * (0.012 + Math.random() * 0.072);
-      ctx.strokeStyle = i % 3 === 0 ? "rgba(82, 69, 45, 0.38)" : "rgba(255, 255, 255, 0.64)";
+      ctx.strokeStyle = i % 3 === 0 ? "rgba(82, 69, 45, 0.32)" : "rgba(255, 255, 255, 0.6)";
       ctx.lineWidth = 0.35 + Math.random() * 0.95;
       ctx.beginPath();
       ctx.moveTo(sx, sy);
@@ -2297,13 +2269,13 @@
       ctx.stroke();
     }
 
-    ctx.globalAlpha = 0.055 * intensity;
-    for (let i = 0; i < 42; i++) {
+    ctx.globalAlpha = 0.035 * intensity;
+    for (let i = 0; i < 18; i++) {
       const sx = x + Math.random() * width;
       const sy = y + Math.random() * height;
       const len = width * (0.035 + Math.random() * 0.12);
       const lift = height * (0.006 + Math.random() * 0.016);
-      ctx.strokeStyle = i % 2 ? "rgba(95, 81, 55, 0.42)" : "rgba(255, 255, 255, 0.72)";
+      ctx.strokeStyle = i % 2 ? "rgba(95, 81, 55, 0.38)" : "rgba(255, 255, 255, 0.68)";
       ctx.lineWidth = 0.65 + Math.random() * 1.55;
       ctx.beginPath();
       ctx.moveTo(sx, sy);
@@ -2311,12 +2283,12 @@
       ctx.stroke();
     }
 
-    ctx.globalAlpha = 0.068 * intensity;
-    for (let i = 0; i < 14; i++) {
+    ctx.globalAlpha = 0.04 * intensity;
+    for (let i = 0; i < 7; i++) {
       const sx = x + width * (0.08 + Math.random() * 0.84);
       const sy = y + height * (0.06 + Math.random() * 0.88);
       const len = width * (0.28 + Math.random() * 0.55);
-      ctx.strokeStyle = i % 2 ? "rgba(54, 48, 38, 0.36)" : "rgba(255, 255, 255, 0.68)";
+      ctx.strokeStyle = i % 2 ? "rgba(54, 48, 38, 0.32)" : "rgba(255, 255, 255, 0.62)";
       ctx.lineWidth = 1.4 + Math.random() * 3.8;
       ctx.beginPath();
       ctx.moveTo(sx, sy);
@@ -2332,13 +2304,13 @@
     }
 
     const wrinkleLines = [
-      [0.06, 0.19, 0.92, 0.12, -0.018, 2.2, 0.078],
-      [0.13, 0.38, 0.88, 0.45, 0.016, 1.65, 0.066],
-      [0.08, 0.73, 0.86, 0.68, -0.014, 1.8, 0.07],
-      [0.33, 0.05, 0.26, 0.94, 0.012, 1.42, 0.052],
-      [0.69, 0.08, 0.78, 0.9, -0.01, 1.35, 0.048],
-      [0.2, 0.58, 0.74, 0.54, -0.022, 1.2, 0.044],
-      [0.47, 0.16, 0.56, 0.84, 0.017, 1.08, 0.042]
+      [0.06, 0.19, 0.92, 0.12, -0.018, 2.2, 0.05],
+      [0.13, 0.38, 0.88, 0.45, 0.016, 1.65, 0.042],
+      [0.08, 0.73, 0.86, 0.68, -0.014, 1.8, 0.045],
+      [0.33, 0.05, 0.26, 0.94, 0.012, 1.42, 0.033],
+      [0.69, 0.08, 0.78, 0.9, -0.01, 1.35, 0.031],
+      [0.2, 0.58, 0.74, 0.54, -0.022, 1.2, 0.028],
+      [0.47, 0.16, 0.56, 0.84, 0.017, 1.08, 0.027]
     ];
 
     wrinkleLines.forEach(([sx, sy, ex, ey, bend, lineWidth, alpha], index) => {
@@ -2366,7 +2338,7 @@
       ctx.stroke();
 
       ctx.globalCompositeOperation = "screen";
-      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 2.1 * intensity})`;
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 1.8 * intensity})`;
       ctx.lineWidth = Math.max(0.7, lineWidth * 0.6);
       ctx.beginPath();
       ctx.moveTo(x1 - nx * 1.6 * jitter, y1 - ny * 1.6 * jitter);
@@ -2384,9 +2356,9 @@
       y + height * 0.5,
       width * 0.7
     );
-    edge.addColorStop(0, `rgba(255, 255, 255, ${0.18 * intensity})`);
+    edge.addColorStop(0, `rgba(255, 255, 255, ${0.12 * intensity})`);
     edge.addColorStop(0.72, "rgba(255, 255, 255, 0)");
-    edge.addColorStop(1, `rgba(68, 54, 35, ${0.15 * intensity})`);
+    edge.addColorStop(1, `rgba(80, 64, 42, ${0.09 * intensity})`);
     ctx.globalAlpha = 1;
     ctx.fillStyle = edge;
     ctx.fillRect(x, y, width, height);
@@ -2401,15 +2373,15 @@
     ctx.clip();
 
     const topShadow = ctx.createLinearGradient(0, y, 0, y + height * 0.08);
-    topShadow.addColorStop(0, `rgba(92, 72, 42, ${0.1 * intensity})`);
+    topShadow.addColorStop(0, `rgba(92, 72, 42, ${0.06 * intensity})`);
     topShadow.addColorStop(1, "rgba(92, 72, 42, 0)");
     ctx.fillStyle = topShadow;
     ctx.fillRect(x, y, width, height * 0.08);
 
     const bottomLift = ctx.createLinearGradient(0, y + height * 0.88, 0, y + height);
     bottomLift.addColorStop(0, "rgba(255, 255, 255, 0)");
-    bottomLift.addColorStop(0.72, `rgba(255, 255, 255, ${0.2 * intensity})`);
-    bottomLift.addColorStop(1, `rgba(72, 54, 32, ${0.14 * intensity})`);
+    bottomLift.addColorStop(0.72, `rgba(255, 255, 255, ${0.12 * intensity})`);
+    bottomLift.addColorStop(1, `rgba(72, 54, 32, ${0.08 * intensity})`);
     ctx.fillStyle = bottomLift;
     ctx.fillRect(x, y + height * 0.88, width, height * 0.12);
 
@@ -2422,8 +2394,8 @@
       y + cornerSize * 0.2,
       cornerSize
     );
-    corner.addColorStop(0, `rgba(255, 255, 255, ${0.4 * intensity})`);
-    corner.addColorStop(0.55, `rgba(255, 255, 255, ${0.14 * intensity})`);
+    corner.addColorStop(0, `rgba(255, 255, 255, ${0.24 * intensity})`);
+    corner.addColorStop(0.55, `rgba(255, 255, 255, ${0.08 * intensity})`);
     corner.addColorStop(1, "rgba(88, 66, 36, 0)");
     ctx.fillStyle = corner;
     ctx.beginPath();
@@ -2433,8 +2405,8 @@
     ctx.closePath();
     ctx.fill();
 
-    ctx.globalAlpha = 0.32 * intensity;
-    ctx.strokeStyle = "rgba(92, 72, 42, 0.24)";
+    ctx.globalAlpha = 0.2 * intensity;
+    ctx.strokeStyle = "rgba(92, 72, 42, 0.22)";
     ctx.lineWidth = Math.max(0.8, width * 0.0012);
     ctx.beginPath();
     ctx.moveTo(x + width - cornerSize * 0.96, y + cornerSize * 0.2);
@@ -2444,38 +2416,15 @@
     ctx.restore();
   }
 
-  async function drawUploadedBackground(ctx, width, height) {
-    if (!uploadedBackgroundDataUrl) return false;
-    try {
-      const img = uploadedBackgroundImage || await loadImage(uploadedBackgroundDataUrl);
-      uploadedBackgroundImage = img;
-      const scale = Math.max(width / img.naturalWidth, height / img.naturalHeight);
-      const drawWidth = img.naturalWidth * scale;
-      const drawHeight = img.naturalHeight * scale;
-      ctx.drawImage(img, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
-      return true;
-    } catch (err) {
-      console.warn("Không dùng được ảnh nền tải lên:", err);
-      return false;
-    }
-  }
-
-  async function composePageOnBackground(pageCanvas) {
-    const shouldUseUploadedPaper = pngUseUploadedBackgroundToggle.checked && !!uploadedBackgroundDataUrl;
+  function composePageOnBackground(pageCanvas) {
     const canvas = document.createElement("canvas");
     canvas.width = pageCanvas.width;
     canvas.height = pageCanvas.height;
     const ctx = canvas.getContext("2d");
 
-    const usedUpload = shouldUseUploadedPaper && await drawUploadedBackground(ctx, canvas.width, canvas.height);
-    if (usedUpload) {
-      drawPaperTexture(ctx, 0, 0, canvas.width, canvas.height, 0.24);
-      drawPaperCurl(ctx, 0, 0, canvas.width, canvas.height, 0.62);
-    } else {
-      drawDefaultPaperBase(ctx, 0, 0, canvas.width, canvas.height);
-      drawPaperTexture(ctx, 0, 0, canvas.width, canvas.height, 1);
-      drawPaperCurl(ctx, 0, 0, canvas.width, canvas.height, 1);
-    }
+    drawDefaultPaperBase(ctx, 0, 0, canvas.width, canvas.height);
+    drawPaperTexture(ctx, 0, 0, canvas.width, canvas.height, 1);
+    drawPaperCurl(ctx, 0, 0, canvas.width, canvas.height, 1);
 
     ctx.drawImage(pageCanvas, 0, 0);
 
@@ -2529,7 +2478,29 @@
   }
 
   function nextFrame() {
-    return new Promise((resolve) => requestAnimationFrame(resolve));
+    // rAF có thể bị tạm dừng vĩnh viễn khi tab bị ẩn -> xuất ảnh đứng yên.
+    // Luôn cho phép thoát bằng timeout để tiến trình không bị kẹt.
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      requestAnimationFrame(finish);
+      window.setTimeout(finish, 80);
+    });
+  }
+
+  function yieldToUI() {
+    return new Promise((resolve) => window.setTimeout(resolve, 0));
+  }
+
+  function raceTimeout(promise, ms) {
+    return Promise.race([
+      Promise.resolve(promise).catch(() => {}),
+      new Promise((resolve) => window.setTimeout(resolve, ms))
+    ]);
   }
 
   function setExportProgress(visible, message = "", current = 0, total = 0) {
@@ -2599,6 +2570,50 @@
     });
   }
 
+  async function blobToPngBlob(blob) {
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await loadImage(url);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      return await new Promise((resolve, reject) => {
+        canvas.toBlob((pngBlob) => {
+          if (pngBlob) resolve(pngBlob);
+          else reject(new Error("Không tạo được ảnh PNG."));
+        }, "image/png");
+      });
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function copyBlobViaCopyEvent(pngBlob) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        document.removeEventListener("copy", onCopy, true);
+        resolve(ok);
+      };
+      const onCopy = (event) => {
+        event.preventDefault();
+        event.clipboardData.setData("image/png", pngBlob);
+        finish(true);
+      };
+      document.addEventListener("copy", onCopy, true);
+      try {
+        const ok = document.execCommand("copy");
+        if (!ok) finish(false);
+        else window.setTimeout(() => finish(true), 0);
+      } catch (err) {
+        finish(false);
+      }
+    });
+  }
+
   async function copyPreviewPngFiles() {
     if (!pngPreviewFiles.length) {
       alert("Chưa có ảnh để copy.");
@@ -2612,12 +2627,34 @@
     try {
       setCopyBusy(true);
       const file = pngPreviewFiles[0];
-      await navigator.clipboard.write([
-        new ClipboardItem({ [file.blob.type || "image/jpeg"]: file.blob })
-      ]);
-      pngPreviewNote.textContent = pngPreviewFiles.length > 1
-        ? `Đã copy trang 1/${pngPreviewFiles.length} vào clipboard.`
-        : "Đã copy ảnh vào clipboard.";
+      const pngBlob = await blobToPngBlob(file.blob);
+
+      let copied = false;
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": pngBlob })
+        ]);
+        copied = true;
+      } catch (writeErr) {
+        console.warn("Clipboard API không nhận ảnh, thử phục hồi focus rồi copy lại:", writeErr);
+        try { window.focus(); } catch (focusErr) { /* bỏ qua */ }
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": pngBlob })
+          ]);
+          copied = true;
+        } catch (retryErr) {
+          copied = await copyBlobViaCopyEvent(pngBlob);
+        }
+      }
+
+      if (copied) {
+        pngPreviewNote.textContent = pngPreviewFiles.length > 1
+          ? `Đã copy trang 1/${pngPreviewFiles.length} vào clipboard.`
+          : "Đã copy ảnh vào clipboard.";
+      } else {
+        alert("Không copy được ảnh. Hãy thử tải JPG hoặc mở bằng Chrome/Edge.");
+      }
     } catch (err) {
       console.error(err);
       alert("Không copy được ảnh. Hãy thử tải JPG hoặc mở bằng Chrome/Edge.");
@@ -2660,7 +2697,8 @@
 
       try {
         setExportProgress(true, "Đang chuẩn bị logo và hình ảnh...", 0, pageEls.length);
-        const blackLogo = await makeBlackLogoDataUrl();
+        const blackLogo = await raceTimeout(makeBlackLogoDataUrl(), 12000);
+        if (!blackLogo) throw new Error("Hết thời gian chờ logo.");
         logoImgs.forEach((img) => {
           img.src = blackLogo;
         });
@@ -2668,8 +2706,8 @@
         console.warn("Không đổi được logo sang ảnh đen, dùng CSS filter khi xuất ảnh:", logoErr);
       }
 
-      await waitForImages(pagesWrapper);
-      if (document.fonts && document.fonts.ready) await document.fonts.ready.catch(() => {});
+      await raceTimeout(waitForImages(pagesWrapper), 10000);
+      if (document.fonts && document.fonts.ready) await raceTimeout(document.fonts.ready, 3000);
       setExportProgress(true, "Đang vẽ lại chữ ký trước khi xuất...", 0, pageEls.length);
       await SignatureAlgorithm.paintSignatures(pagesWrapper);
       await nextFrame();
@@ -2678,7 +2716,7 @@
       previewShell.style.height = "";
 
       const files = [];
-      const exportScale = Math.min(2.2, Math.max(1.65, window.devicePixelRatio || 2));
+      const exportScale = Math.min(1.7, Math.max(1.35, window.devicePixelRatio || 1.5));
       for (let i = 0; i < pageEls.length; i++) {
         pagesWrapper.style.transform = "";
         previewShell.style.height = "";
@@ -2691,15 +2729,16 @@
           imageTimeout: 6000,
           logging: false
         });
-        const composedCanvas = await composePageOnBackground(canvas);
-        const blob = await canvasToJpegBlob(composedCanvas, 0.9);
+        await yieldToUI();
+        const composedCanvas = composePageOnBackground(canvas);
+        const blob = await canvasToJpegBlob(composedCanvas, 0.82);
         files.push({
           name: imageFileName(pageEls[i], i, pageEls.length),
           url: blobToObjectUrl(blob),
           blob
         });
         setExportProgress(true, `Đã xuất trang ${i + 1} / ${pageEls.length}.`, i + 1, pageEls.length);
-        await nextFrame();
+        await yieldToUI();
       }
       showPngPreview(files);
       setExportProgress(true, `Xuất ảnh xong: ${files.length} file JPG.`, pageEls.length, pageEls.length);
@@ -2736,7 +2775,7 @@
     previewShell.style.height = "";
 
     try {
-      if (document.fonts && document.fonts.ready) await document.fonts.ready.catch(() => {});
+      if (document.fonts && document.fonts.ready) await raceTimeout(document.fonts.ready, 3000);
       await SignatureAlgorithm.paintSignatures(pagesWrapper);
     } catch (err) {
       console.warn("Không vẽ được chữ ký trước khi in:", err);
@@ -2748,10 +2787,10 @@
     schedulePreviewFit();
   }
 
-  syncSignatureFontSize();
   initFancyCursor();
   showInitialTemplate();
   updateEmployeeSelectMode();
+  restoreSavedReceiverNames();
   updateReceiverInputMode();
 
   inventoryFile.addEventListener("change", (e) => {
@@ -2779,9 +2818,7 @@
 
         rebuildEmployeeData();
 
-        alert(duplicateCodesRemoved
-          ? `Đã nạp dữ liệu nhân viên từ Excel. Đã lọc ${duplicateCodesRemoved} mã trùng.`
-          : "Đã nạp dữ liệu nhân viên từ Excel.");
+        alert("Đã nạp dữ liệu nhân viên từ Excel.");
       } catch (err) {
         console.error(err);
         alert("Lỗi đọc file Excel.");
@@ -2821,6 +2858,27 @@
 
   btnSaveReceiver.addEventListener("click", () => {
     saveReceiverNames(false);
+    const saved = persistReceiverNames(receiverNamesInput.value);
+    if (saved) {
+      receiverStatus.textContent = receiverNamesInput.value.trim()
+        ? "Đã lưu tên người nhận vào máy — lần sau mở trang sẽ tự điền lại."
+        : "Đã xoá tên người nhận đã lưu.";
+    } else {
+      receiverStatus.textContent = "Trình duyệt không cho phép lưu dữ liệu (chế độ riêng tư?).";
+    }
+  });
+
+  btnClearReceiver.addEventListener("click", () => {
+    const hasContent = String(receiverNamesInput.value || "").trim() || loadSavedReceiverNames();
+    if (hasContent && !window.confirm("Xoá danh sách tên người nhận đã lưu?")) return;
+    persistReceiverNames("");
+    receiverNamesInput.value = "";
+    receiverNames = [];
+    receiverSignatureStates = [];
+    receiverSignaturesReady = false;
+    updateReceiverInputMode();
+    updateReceiverStatus();
+    rerenderCurrentDocument();
   });
 
   multiEmployeeToggle.addEventListener("change", () => {
@@ -2872,36 +2930,6 @@
       updateCurrentPageFromScroll();
     });
   }, { passive: true });
-  pngUseUploadedBackgroundToggle.addEventListener("change", clearPngPreview);
-  dedupeToggle.addEventListener("change", () => {
-    if (!Object.keys(rawEmpMap).length) return;
-    rebuildEmployeeData();
-    updateReceiverStatus();
-    clearPngPreview();
-    if (hasGeneratedDocument) rerenderCurrentDocument();
-  });
-  pngBackgroundFile.addEventListener("change", () => {
-    const file = pngBackgroundFile.files && pngBackgroundFile.files[0];
-    if (!file) {
-      uploadedBackgroundDataUrl = "";
-      uploadedBackgroundImage = null;
-      return;
-    }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      pngBackgroundFile.value = "";
-      uploadedBackgroundDataUrl = "";
-      uploadedBackgroundImage = null;
-      alert("Chỉ hỗ trợ ảnh nền JPG, PNG hoặc WEBP.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      uploadedBackgroundDataUrl = String(event.target.result || "");
-      uploadedBackgroundImage = null;
-      clearPngPreview();
-    };
-    reader.readAsDataURL(file);
-  });
   pngPreviewModal.addEventListener("click", (event) => {
     if (event.target === pngPreviewModal) closePngPreview();
   });
@@ -2911,8 +2939,6 @@
     }
   });
   bcSelect.addEventListener("change", rerenderCurrentDocument);
-  signatureSizeInput.addEventListener("change", refreshSignatureSizing);
-  signatureSizeInput.addEventListener("input", scheduleSignatureSizingRefresh);
   window.addEventListener("resize", () => {
     if (windowResizeRaf) return;
     windowResizeRaf = requestAnimationFrame(() => {

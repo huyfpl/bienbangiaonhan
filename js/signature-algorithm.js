@@ -407,12 +407,18 @@
     }
   }
 
+  function fontsReadyWithTimeout(ms = 3000) {
+    if (!document.fonts || !document.fonts.ready) return Promise.resolve();
+    return Promise.race([
+      document.fonts.ready.catch(() => {}),
+      new Promise((resolve) => window.setTimeout(resolve, ms))
+    ]);
+  }
+
   async function paintSignatures(root = document) {
     if (document.fonts && document.fonts.load) {
       await Promise.allSettled(signatureFontFamilies.map((family) => document.fonts.load(`32px ${quoteFontFamily(family)}`)));
-      if (document.fonts.ready) {
-        await document.fonts.ready.catch(() => {});
-      }
+      await fontsReadyWithTimeout(3000);
     }
 
     root.querySelectorAll(".signature-canvas").forEach((canvas) => {
